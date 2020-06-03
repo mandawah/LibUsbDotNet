@@ -1,47 +1,48 @@
 // Copyright © 2006-2010 Travis Robinson. All rights reserved.
-// 
+//
 // website: http://sourceforge.net/projects/libusbdotnet
 // e-mail:  libusbdotnet@gmail.com
-// 
+//
 // This program is free software; you can redistribute it and/or modify it
 // under the terms of the GNU General Public License as published by the
-// Free Software Foundation; either version 2 of the License, or 
+// Free Software Foundation; either version 2 of the License, or
 // (at your option) any later version.
-// 
-// This program is distributed in the hope that it will be useful, but 
+//
+// This program is distributed in the hope that it will be useful, but
 // WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
 // or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
 // for more details.
-// 
+//
 // You should have received a copy of the GNU General Public License along
 // with this program; if not, write to the Free Software Foundation, Inc.,
-// 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA. or 
+// 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA. or
 // visit www.gnu.org.
-// 
-// 
+//
+//
+using LibUsbDotNet.LibUsb;
 using System;
 using System.Runtime.Serialization;
 
 namespace LibUsbDotNet.Main
 {
     /// <summary>
-    /// Finds and identifies usb devices. Used for easily locating  
+    /// Finds and identifies usb devices. Used for easily locating
     /// </summary>
     /// <remarks>
     /// <list type="bullet">
     /// <item>
-    /// Instances of this class can optionally be passed directly into 
-    /// <see cref="UsbDevice.OpenUsbDevice(LibUsbDotNet.Main.UsbDeviceFinder)"/> 
+    /// Instances of this class can optionally be passed directly into
+    /// <see cref="UsbDevice.OpenUsbDevice(LibUsbDotNet.Main.UsbDeviceFinder)"/>
     /// to quickly find and open a specific usb device in one step.
     /// </item>
     /// <item>
-    /// Pass instances of this class into the 
-    /// <see cref="UsbRegDeviceList.Find(UsbDeviceFinder)"/>, 
-    /// <see cref="UsbRegDeviceList.FindAll(UsbDeviceFinder)"/>,  
-    /// or <see cref="UsbRegDeviceList.FindLast(UsbDeviceFinder)"/> 
-    /// functions of a  <see cref="UsbRegDeviceList"/> 
+    /// Pass instances of this class into the
+    /// <see cref="UsbRegDeviceList.Find(UsbDeviceFinder)"/>,
+    /// <see cref="UsbRegDeviceList.FindAll(UsbDeviceFinder)"/>,
+    /// or <see cref="UsbRegDeviceList.FindLast(UsbDeviceFinder)"/>
+    /// functions of a  <see cref="UsbRegDeviceList"/>
     /// instance to find connected usb devices without opening devices or interrogating the bus.
-    /// After locating the required <see cref="UsbRegistry"/> instance, call the 
+    /// After locating the required <see cref="UsbRegistry"/> instance, call the
     /// <see cref="UsbRegistry.Open"/> method to start using the <see cref="UsbDevice"/> instance.
     /// </item>
     /// </list>
@@ -52,7 +53,7 @@ namespace LibUsbDotNet.Main
     public class UsbDeviceFinder : ISerializable
     {
         /// <summary>
-        /// Creates a UsbDeviceFinder class for locating and identifying usb devices.
+        /// Initializes a new instance of the <see cref="UsbDeviceFinder"/> class for locating and identifying usb devices.
         /// </summary>
         /// <param name="vid">The vendor id of the usb device to find, or <see cref="int.MaxValue"/> to ignore.</param>
         /// <param name="pid">The product id of the usb device to find, or <see cref="int.MaxValue"/> to ignore.</param>
@@ -69,7 +70,7 @@ namespace LibUsbDotNet.Main
         }
 
         /// <summary>
-        /// Creates a UsbDeviceFinder class for locating usb devices by VendorID, ProductID, and Serial number.
+        /// Initializes a new instance of the <see cref="UsbDeviceFinder"/> class for locating usb devices by VendorID, ProductID, and Serial number.
         /// </summary>
         /// <param name="vid">The vendor id of the usb device to find.</param>
         /// <param name="pid">The product id of the usb device to find.</param>
@@ -80,7 +81,7 @@ namespace LibUsbDotNet.Main
         }
 
         /// <summary>
-        /// Creates a UsbDeviceFinder class for locating usb devices by VendorID, ProuctID, and Revision code.
+        /// Initializes a new instance of the <see cref="UsbDeviceFinder"/> class for locating usb devices by VendorID, ProuctID, and Revision code.
         /// </summary>
         /// <param name="vid">The vendor id of the usb device to find.</param>
         /// <param name="pid">The product id of the usb device to find.</param>
@@ -91,7 +92,7 @@ namespace LibUsbDotNet.Main
         }
 
         /// <summary>
-        /// Creates a UsbDeviceFinder class for locating usb devices vendor and product ID.
+        /// Initializes a new instance of the <see cref="UsbDeviceFinder"/> class for locating usb devices vendor and product ID.
         /// </summary>
         /// <param name="vid">The vendor id of the usb device to find.</param>
         /// <param name="pid">The product id of the usb device to find.</param>
@@ -101,7 +102,7 @@ namespace LibUsbDotNet.Main
         }
 
         /// <summary>
-        /// Creates a UsbDeviceFinder class for locating usb devices.
+        /// Initializes a new instance of the <see cref="UsbDeviceFinder"/> class for locating usb devices.
         /// </summary>
         /// <param name="vid">The vendor id of the usb device to find.</param>
         public UsbDeviceFinder(int vid)
@@ -110,7 +111,7 @@ namespace LibUsbDotNet.Main
         }
 
         /// <summary>
-        /// Creates a UsbDeviceFinder class for locating usb devices by a serial number.
+        /// Initializes a new instance of the <see cref="UsbDeviceFinder"/> class  for locating usb devices by a serial number.
         /// </summary>
         /// <param name="serialNumber">The serial number of the usb device to find.</param>
         public UsbDeviceFinder(string serialNumber)
@@ -119,7 +120,7 @@ namespace LibUsbDotNet.Main
         }
 
         /// <summary>
-        /// Creates a UsbDeviceFinder class for locating usb devices by a unique <see cref="Guid"/> string.
+        /// Initializes a new instance of the <see cref="UsbDeviceFinder"/> class s for locating usb devices by a unique <see cref="Guid"/> string.
         /// </summary>
         /// <param name="deviceInterfaceGuid">The unique <see cref="Guid"/> to find.</param>
         public UsbDeviceFinder(Guid deviceInterfaceGuid)
@@ -128,14 +129,16 @@ namespace LibUsbDotNet.Main
         }
 
         /// <summary>
-        /// Use a serialization stream to fill the <see cref="UsbDeviceFinder"/> class. 
+        /// Initializes a new instance of the <see cref="UsbDeviceFinder"/> class using a serialization stream to fill the <see cref="UsbDeviceFinder"/> class.
         /// </summary>
         /// <param name="info"></param>
         /// <param name="context"></param>
         protected UsbDeviceFinder(SerializationInfo info, StreamingContext context)
         {
             if (info == null)
+            {
                 throw new ArgumentNullException("info");
+            }
 
             this.Vid = (int)info.GetValue("Vid", typeof(int));
             this.Pid = (int)info.GetValue("Pid", typeof(int));
@@ -145,12 +148,14 @@ namespace LibUsbDotNet.Main
         }
 
         /// <summary>
-        /// 
+        /// Initializes a new instance of the <see cref="UsbDeviceFinder"/> class.
         /// </summary>
-        protected UsbDeviceFinder() { }
+        protected UsbDeviceFinder()
+        {
+        }
 
         /// <summary>
-        /// The device interface guid string to find, or <see cref="String.Empty"/> to ignore.
+        /// Gets the device interface guid string to find, or <see cref="string.Empty"/> to ignore.
         /// </summary>
         public Guid? DeviceInterfaceGuid
         {
@@ -159,7 +164,7 @@ namespace LibUsbDotNet.Main
         }
 
         /// <summary>
-        /// The serial number of the device to find.
+        /// Gets the serial number of the device to find.
         /// </summary>
         /// <remarks>
         /// Set to null to ignore.
@@ -171,7 +176,7 @@ namespace LibUsbDotNet.Main
         }
 
         /// <summary>
-        /// The revision number of the device to find.
+        /// Gets the revision number of the device to find.
         /// </summary>
         /// <remarks>
         /// Set to <see cref="int.MaxValue"/> to ignore.
@@ -183,7 +188,7 @@ namespace LibUsbDotNet.Main
         }
 
         /// <summary>
-        /// The product id of the device to find.
+        /// Gets the product id of the device to find.
         /// </summary>
         /// <remarks>
         /// Set to <see cref="int.MaxValue"/> to ignore.
@@ -195,7 +200,7 @@ namespace LibUsbDotNet.Main
         }
 
         /// <summary>
-        /// The vendor id of the device to find.
+        /// Gets the vendor id of the device to find.
         /// </summary>
         /// <remarks>
         /// Set to <see cref="int.MaxValue"/> to ignore.
@@ -206,16 +211,13 @@ namespace LibUsbDotNet.Main
             private set;
         }
 
-        #region ISerializable Members
-        /// <summary>
-        /// Store this class as a binary serializtion object.
-        /// </summary>
-        /// <param name="info">The serialization instance to populate.</param>
-        /// <param name="context"></param>
+        /// <inheritdoc/>
         public void GetObjectData(SerializationInfo info, StreamingContext context)
         {
             if (info == null)
+            {
                 throw new ArgumentNullException("info");
+            }
 
             info.AddValue("Vid", this.Vid);
             info.AddValue("Pid", this.Pid);
@@ -223,7 +225,6 @@ namespace LibUsbDotNet.Main
             info.AddValue("SerialNumber", this.SerialNumber);
             info.AddValue("DeviceInterfaceGuid", this.DeviceInterfaceGuid);
         }
-        #endregion
 
         /// <summary>
         /// Dynamic predicate find function. Pass this function into any method that has a <see cref="Predicate{UsbDevice}"/> parameter.
@@ -235,27 +236,35 @@ namespace LibUsbDotNet.Main
         /// <returns>True if the <see cref="UsbDevice"/> instance matches the <see cref="UsbDeviceFinder"/> properties.</returns>
         public virtual bool Check(IUsbDevice usbDevice)
         {
-            if (this.Vid != null && usbDevice.Info.VendorId != this.Vid.Value)
+            try
             {
+                if (this.Vid != null && usbDevice.Info.VendorId != this.Vid.Value)
+                {
+                    return false;
+                }
+
+                if (this.Pid != null && usbDevice.Info.ProductId != this.Pid.Value)
+                {
+                    return false;
+                }
+
+                if (this.Revision != null && usbDevice.Info.Usb != this.Revision.Value)
+                {
+                    return false;
+                }
+
+                if (this.SerialNumber != null && usbDevice.Info.SerialNumber != this.SerialNumber)
+                {
+                    return false;
+                }
+
+                return true;
+            }
+            catch (LibUsb.UsbException ex) when (ex.ErrorCode == Error.NotFound)
+            {
+                // The device has probably disconnected while we were inspecting it. Continue.
                 return false;
             }
-
-            if (this.Pid != null && usbDevice.Info.ProductId != this.Pid.Value)
-            {
-                return false;
-            }
-
-            if (this.Revision != null && usbDevice.Info.Usb != this.Revision.Value)
-            {
-                return false;
-            }
-
-            if (this.SerialNumber != null && usbDevice.Info.SerialNumber != this.SerialNumber)
-            {
-                return false;
-            }
-
-            return true;
         }
     }
 }

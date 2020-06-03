@@ -1,21 +1,50 @@
-﻿using LibUsbDotNet.Main;
+﻿// Copyright © 2006-2010 Travis Robinson. All rights reserved.
+//
+// website: http://sourceforge.net/projects/libusbdotnet
+// e-mail:  libusbdotnet@gmail.com
+//
+// This program is free software; you can redistribute it and/or modify it
+// under the terms of the GNU General Public License as published by the
+// Free Software Foundation; either version 2 of the License, or
+// (at your option) any later version.
+//
+// This program is distributed in the hope that it will be useful, but
+// WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
+// or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
+// for more details.
+//
+// You should have received a copy of the GNU General Public License along
+// with this program; if not, write to the Free Software Foundation, Inc.,
+// 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA. or
+// visit www.gnu.org.
+//
+//
+using LibUsbDotNet.Descriptors;
+using LibUsbDotNet.Main;
 using System;
-using System.Runtime.InteropServices;
 using System.Text;
 
 namespace LibUsbDotNet.LibUsb
 {
+    // Implementation of functionality which wraps around a DeviceHandle.
     public partial class UsbDevice
     {
-        private readonly byte[] emptyByteArray =
-#if NET45
-            new byte[]{};
-#else
-            Array.Empty<byte>();
-#endif
-
+        /// <summary>
+        /// The underlying device handle. The handle is populated when you open the device
+        /// using <see cref="Open"/>, and cleared when you close the device using <see cref="Close"/>.
+        /// </summary>
         private DeviceHandle deviceHandle;
 
+        /// <inheritdoc/>
+        public DeviceHandle DeviceHandle
+        {
+            get { return this.deviceHandle; }
+        }
+
+        /// <summary>
+        /// Gets a value indicating whether the device has been opened. You can perform I/O on a
+        /// device when it is open.
+        /// </summary>
         public bool IsOpen
         {
             get
@@ -24,12 +53,29 @@ namespace LibUsbDotNet.LibUsb
             }
         }
 
+        /// <summary>
+        /// Gets the <c>bConfigurationValue</c> of the currently active configuration.
+        /// </summary>
+        /// <remarks>
+        /// <para>
+        /// You could formulate your own control request to obtain this information, but this function
+        /// has the advantage that it may be able to retrieve the information from operating system caches
+        /// (no I/O involved).
+        /// </para>
+        /// <para>
+        /// If the OS does not cache this information, then this function will block while a control
+        /// transfer is submitted to retrieve the information.
+        /// </para>
+        /// <para>
+        /// This property will return a value of 0 in the config output parameter if the device is
+        /// in unconfigured state.
+        /// </para>
+        /// </remarks>
         public int Configuration
         {
             get
             {
                 this.EnsureNotDisposed();
-
                 this.EnsureOpen();
 
                 int config = 0;
@@ -38,6 +84,28 @@ namespace LibUsbDotNet.LibUsb
             }
         }
 
+        /// <inheritdoc/>
+        public void SetConfiguration(int config)
+        {
+            this.EnsureNotDisposed();
+            this.EnsureOpen();
+
+            NativeMethods.SetConfiguration(this.deviceHandle, config).ThrowOnError();
+        }
+
+        /// <summary>
+        /// Retrieve a descriptor from a device.
+        /// </summary>
+        /// <param name="descriptorIndex">
+        /// The index of the descriptor to retieve.
+        /// </param>
+        /// <param name="failSilently">
+        /// <see langword="true"/> to return <see langword="null"/> when the descriptor could not be
+        /// received; <see langword="false"/> to throw an <see cref="UsbException"/> instead.
+        /// </param>
+        /// <returns>
+        /// The value of the requested descriptor.
+        /// </returns>
         public unsafe string GetStringDescriptor(byte descriptorIndex, bool failSilently = false)
         {
             if (failSilently && !this.IsOpen)
@@ -45,6 +113,7 @@ namespace LibUsbDotNet.LibUsb
                 return null;
             }
 
+            this.EnsureNotDisposed();
             this.EnsureOpen();
 
             if (descriptorIndex == 0)
@@ -74,29 +143,18 @@ namespace LibUsbDotNet.LibUsb
             }
         }
 
-        /// <summary>
-        /// Transmits control data over a default control endpoint.
-        /// </summary>
-        /// <param name="setupPacket">An 8-byte setup packet which contains parameters for the control request. 
-        /// See section 9.3 USB Device Requests of the Universal Serial Bus Specification Revision 2.0 for more information. </param>
-        /// <param name="buffer">Data to be sent/received from the device.</param>
-        /// <param name="bufferLength">Length of the buffer param.</param>
-        /// <returns>The number of bytes sent or received (depends on the direction of the control transfer).</returns>
+        /// <inheritdoc/>
         public unsafe int ControlTransfer(UsbSetupPacket setupPacket)
         {
-            return ControlTransfer(setupPacket, emptyByteArray, 0, 0);
+            return this.ControlTransfer(setupPacket, null, 0, 0);
         }
 
-        /// <summary>
-        /// Transmits control data over a default control endpoint.
-        /// </summary>
-        /// <param name="setupPacket">An 8-byte setup packet which contains parameters for the control request. 
-        /// See section 9.3 USB Device Requests of the Universal Serial Bus Specification Revision 2.0 for more information. </param>
-        /// <param name="buffer">Data to be sent/received from the device.</param>
-        /// <param name="bufferLength">Length of the buffer param.</param>
-        /// <returns>The number of bytes sent or received (depends on the direction of the control transfer).</returns>
+        /// <inheritdoc/>
         public unsafe int ControlTransfer(UsbSetupPacket setupPacket, byte[] buffer, int offset, int length)
         {
+            this.EnsureNotDisposed();
+            this.EnsureOpen();
+
             int result = 0;
 
             if (length > 0)
@@ -111,7 +169,7 @@ namespace LibUsbDotNet.LibUsb
                         (ushort)setupPacket.Index,
                         data,
                         (ushort)length,
-                        UsbConstants.DEFAULT_TIMEOUT);
+                        UsbConstants.DefaultTimeout);
                 }
             }
             else
@@ -124,7 +182,7 @@ namespace LibUsbDotNet.LibUsb
                     (ushort)setupPacket.Index,
                     null,
                     0,
-                    UsbConstants.DEFAULT_TIMEOUT);
+                    UsbConstants.DefaultTimeout);
             }
 
             if (result >= 0)
@@ -133,44 +191,107 @@ namespace LibUsbDotNet.LibUsb
             }
             else
             {
-                throw new MonoUsbException((Error)result);
+                throw new UsbException((Error)result);
             }
         }
 
+        /// <inheritdoc/>
+        public unsafe bool GetDescriptor(byte descriptorType, byte index, short langId, IntPtr buffer, int bufferLength, out int transferLength)
+        {
+            this.EnsureNotDisposed();
+            this.EnsureOpen();
+
+            int ret = NativeMethods.ControlTransfer(
+                this.deviceHandle,
+                (byte)EndpointDirection.In,
+                (byte)StandardRequest.GetDescriptor,
+                (ushort)((descriptorType << 8) | index),
+                0,
+                (byte*)buffer.ToPointer(),
+                (ushort)bufferLength,
+                1000);
+
+            if (ret < 0)
+            {
+                throw new UsbException((Error)ret);
+            }
+
+            transferLength = ret;
+            return true;
+        }
+
+        /// <inheritdoc/>
+        public bool GetDescriptor(byte descriptorType, byte index, short langId, object buffer, int bufferLength, out int transferLength)
+        {
+            using (PinnedHandle p = new PinnedHandle(buffer))
+            {
+                return this.GetDescriptor(descriptorType, index, langId, p.Handle, bufferLength, out transferLength);
+            }
+        }
+
+        /// <inheritdoc/>
+        public bool GetLangIDs(out short[] langIDs)
+        {
+            this.EnsureNotDisposed();
+            this.EnsureOpen();
+
+            LangStringDescriptor sd = new LangStringDescriptor(UsbDescriptor.Size + (16 * sizeof(short)));
+
+            int ret;
+            bool bSuccess = this.GetDescriptor((byte)DescriptorType.String, 0, 0, sd.Ptr, sd.MaxSize, out ret);
+            bSuccess = sd.Get(out langIDs);
+            sd.Free();
+            return bSuccess;
+        }
+
+        /// <inheritdoc/>
+        public bool GetString(out string stringData, short langId, byte stringIndex)
+        {
+            this.EnsureNotDisposed();
+            this.EnsureOpen();
+
+            stringData = null;
+            int iTransferLength;
+            LangStringDescriptor sd = new LangStringDescriptor(255);
+            bool bSuccess = this.GetDescriptor((byte)DescriptorType.String, stringIndex, langId, sd.Ptr, sd.MaxSize, out iTransferLength);
+            if (bSuccess && iTransferLength > UsbDescriptor.Size && sd.Length == iTransferLength)
+            {
+                bSuccess = sd.Get(out stringData);
+            }
+
+            return bSuccess;
+        }
+
+        /// <inheritdoc/>
+        public void ResetDevice()
+        {
+            this.EnsureNotDisposed();
+            this.EnsureOpen();
+
+            NativeMethods.ResetDevice(this.deviceHandle).ThrowOnError();
+        }
+
+        /// <summary>
+        /// Opens a device, allowing you to perform I/O on this device.
+        /// </summary>
         public void Open()
         {
-            if (this.IsOpen)
-            {
-                return;
-            }
-
-            IntPtr deviceHandle = IntPtr.Zero;
-            NativeMethods.Open(this.device, ref deviceHandle).ThrowOnError();
-
-            this.deviceHandle = DeviceHandle.DangerousCreate(deviceHandle);
+            this.OpenNative().ThrowOnError();
         }
 
+        /// <inheritdoc/>
         public bool TryOpen()
         {
-            if (this.IsOpen)
-            {
-                return true;
-            }
-
-            IntPtr deviceHandle = IntPtr.Zero;
-            if (NativeMethods.Open(this.device, ref deviceHandle) == Error.Success)
-            {
-                this.deviceHandle = DeviceHandle.DangerousCreate(deviceHandle);
-                return true;
-            }
-            else
-            {
-                return false;
-            }
+            return this.OpenNative() == Error.Success;
         }
 
+        /// <summary>
+        /// Closes the device.
+        /// </summary>
         public void Close()
         {
+            this.EnsureNotDisposed();
+
             if (!this.IsOpen)
             {
                 return;
@@ -180,12 +301,36 @@ namespace LibUsbDotNet.LibUsb
             this.deviceHandle = null;
         }
 
+        /// <summary>
+        /// Throws a <see cref="UsbException"/> if the device is not open.
+        /// </summary>
         protected void EnsureOpen()
         {
             if (!this.IsOpen)
             {
-                throw new MonoUsbException("The device has not been opened. You need to call Open() first.");
+                throw new UsbException("The device has not been opened. You need to call Open() first.");
             }
+        }
+
+        private Error OpenNative()
+        {
+            this.EnsureNotDisposed();
+
+            if (this.IsOpen)
+            {
+                return Error.Success;
+            }
+
+            IntPtr deviceHandle = IntPtr.Zero;
+            var ret = NativeMethods.Open(this.device, ref deviceHandle);
+            
+            if (ret == Error.Success)
+            {
+                this.deviceHandle = DeviceHandle.DangerousCreate(deviceHandle);
+                this.descriptor = null;
+            }
+
+            return ret;
         }
     }
 }

@@ -1,33 +1,33 @@
 // Copyright © 2006-2010 Travis Robinson. All rights reserved.
-// 
+//
 // website: http://sourceforge.net/projects/libusbdotnet
 // e-mail:  libusbdotnet@gmail.com
-// 
+//
 // This program is free software; you can redistribute it and/or modify it
 // under the terms of the GNU General Public License as published by the
-// Free Software Foundation; either version 2 of the License, or 
+// Free Software Foundation; either version 2 of the License, or
 // (at your option) any later version.
-// 
-// This program is distributed in the hope that it will be useful, but 
+//
+// This program is distributed in the hope that it will be useful, but
 // WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
 // or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
 // for more details.
-// 
+//
 // You should have received a copy of the GNU General Public License along
 // with this program; if not, write to the Free Software Foundation, Inc.,
-// 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA. or 
+// 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA. or
 // visit www.gnu.org.
-// 
-// 
+//
+//
+using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Diagnostics;
-using System.Runtime.InteropServices;
 
 namespace LibUsbDotNet.Info
 {
     /// <summary> Describes a USB device interface.
-    /// </summary> 
+    /// </summary>
     public class UsbInterfaceInfo : UsbBaseInfo
     {
         private List<UsbEndpointInfo> endpoints = new List<UsbEndpointInfo>();
@@ -62,10 +62,11 @@ namespace LibUsbDotNet.Info
                 }
             }
 
-            value.mRawDescriptors = new byte[descriptor.ExtraLength];
+            value.RawDescriptors = new byte[descriptor.ExtraLength];
             if (descriptor.ExtraLength > 0)
             {
-                Marshal.Copy(descriptor.Extra, value.mRawDescriptors, 0, descriptor.ExtraLength);
+                Span<byte> extra = new Span<byte>(descriptor.Extra, descriptor.ExtraLength);
+                extra.CopyTo(value.RawDescriptors);
             }
 
             value.Interface = device.GetStringDescriptor(descriptor.Interface, failSilently: true);
@@ -77,19 +78,24 @@ namespace LibUsbDotNet.Info
             return value;
         }
 
-        public byte AlternateSetting { get; private set; }
-        public ClassCode Class { get; private set; }
-        public int Number { get; private set; }
-        public byte Protocol { get; private set; }
-        public string Interface { get; private set; }
-        public byte SubClass { get; private set; }
+        public virtual byte AlternateSetting { get; private set; }
+
+        public virtual ClassCode Class { get; private set; }
+
+        public virtual int Number { get; private set; }
+
+        public virtual byte Protocol { get; private set; }
+
+        public virtual string Interface { get; private set; }
+
+        public virtual byte SubClass { get; private set; }
 
         /// <summary>
         /// Gets the collection of endpoint descriptors associated with this interface.
         /// </summary>
-        public ReadOnlyCollection<UsbEndpointInfo> Endpoints
+        public virtual ReadOnlyCollection<UsbEndpointInfo> Endpoints
         {
-            get { return endpoints.AsReadOnly(); }
+            get { return this.endpoints.AsReadOnly(); }
         }
 
         public override string ToString()

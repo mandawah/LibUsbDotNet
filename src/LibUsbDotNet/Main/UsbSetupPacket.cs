@@ -1,32 +1,32 @@
 // Copyright © 2006-2010 Travis Robinson. All rights reserved.
-// 
+//
 // website: http://sourceforge.net/projects/libusbdotnet
 // e-mail:  libusbdotnet@gmail.com
-// 
+//
 // This program is free software; you can redistribute it and/or modify it
 // under the terms of the GNU General Public License as published by the
-// Free Software Foundation; either version 2 of the License, or 
+// Free Software Foundation; either version 2 of the License, or
 // (at your option) any later version.
-// 
-// This program is distributed in the hope that it will be useful, but 
+//
+// This program is distributed in the hope that it will be useful, but
 // WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
 // or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
 // for more details.
-// 
+//
 // You should have received a copy of the GNU General Public License along
 // with this program; if not, write to the Free Software Foundation, Inc.,
-// 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA. or 
+// 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA. or
 // visit www.gnu.org.
-// 
-// 
+//
+//
 using System.Runtime.InteropServices;
 
 namespace LibUsbDotNet.Main
 {
     /// <summary> Transfers data to the main control endpoint (Endpoint 0).
-    /// </summary> 
+    /// </summary>
     /// <remarks> All USB devices respond to requests from the host on the device’s Default Control Pipe. These requests are made using control transfers. The request and the request’s parameters are sent to the device in the Setup packet. The host is responsible for establishing the values passed in the fields. Every Setup packet has eight bytes.
-    /// </remarks> 
+    /// </remarks>
     [StructLayout(LayoutKind.Sequential, Pack = 1)]
     public struct UsbSetupPacket
     {
@@ -74,26 +74,9 @@ namespace LibUsbDotNet.Main
         /// This field specifies the length of the data transferred during the second phase of the control transfer. The direction of data transfer (host-to-device or device-to-host) is indicated by the Direction bit of the <see cref="RequestType"/> field. If this field is zero, there is no data transfer phase. On an input request, a device must never return more data than is indicated by the wLength value; it may return less. On an output request, wLength will always indicate the exact amount of data to be sent by the host. Device behavior is undefined if the host should send more data than is specified in wLength.
         /// </summary>
         public short Length;
-/*
+
         /// <summary>
-        /// Creates a new instance of a <see cref="UsbSetupPacket"/> and initializes all the fields with the following parameters.
-        /// </summary>
-        /// <param name="requestType">See <see cref="UsbSetupPacket.RequestType"/>.</param>
-        /// <param name="request">See <see cref="UsbSetupPacket.Request"/>.</param>
-        /// <param name="value">See <see cref="UsbSetupPacket.Value"/>.</param>
-        /// <param name="index">See <see cref="UsbSetupPacket.Index"/>.</param>
-        /// <param name="length">See <see cref="UsbSetupPacket.Length"/>.</param>
-        public UsbSetupPacket(byte requestType, byte request, short value, short index, short length)
-        {
-            RequestType = requestType;
-            Request = request;
-            Value = value;
-            Index = index;
-            Length = length;
-        }
-*/
-        /// <summary>
-        /// Creates a new instance of a <see cref="UsbSetupPacket"/> and initializes all the fields with the following parameters.
+        /// Initializes a new instance of the <see cref="UsbSetupPacket"/> struct and initializes all the fields with the following parameters.
         /// </summary>
         /// <param name="bRequestType">See <see cref="UsbSetupPacket.RequestType"/>.</param>
         /// <param name="bRequest">See <see cref="UsbSetupPacket.Request"/>.</param>
@@ -102,14 +85,14 @@ namespace LibUsbDotNet.Main
         /// <param name="wlength">See <see cref="UsbSetupPacket.Length"/>.</param>
         public UsbSetupPacket(byte bRequestType, byte bRequest, int wValue, int wIndex, int wlength)
         {
-        	unchecked
-        	{
-	        	RequestType = (byte)(bRequestType & 0xFF);
-	            Request =  (byte)(bRequest & 0xFF);
-	            Value =  (short)(wValue & 0xFFFF);
-	            Index = (short)(wIndex & 0xFFFF);
-	            Length =  (short)(wlength & 0xFFFF);
-        	}
+            unchecked
+            {
+                this.RequestType = (byte)(bRequestType & 0xFF);
+                this.Request = (byte)(bRequest & 0xFF);
+                this.Value = (short)(wValue & 0xFFFF);
+                this.Index = (short)(wIndex & 0xFFFF);
+                this.Length = (short)(wlength & 0xFFFF);
+            }
         }
     }
 }

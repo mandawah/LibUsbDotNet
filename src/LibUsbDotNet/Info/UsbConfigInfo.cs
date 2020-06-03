@@ -1,33 +1,33 @@
 // Copyright © 2006-2010 Travis Robinson. All rights reserved.
-// 
+//
 // website: http://sourceforge.net/projects/libusbdotnet
 // e-mail:  libusbdotnet@gmail.com
-// 
+//
 // This program is free software; you can redistribute it and/or modify it
 // under the terms of the GNU General Public License as published by the
-// Free Software Foundation; either version 2 of the License, or 
+// Free Software Foundation; either version 2 of the License, or
 // (at your option) any later version.
-// 
-// This program is distributed in the hope that it will be useful, but 
+//
+// This program is distributed in the hope that it will be useful, but
 // WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
 // or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
 // for more details.
-// 
+//
 // You should have received a copy of the GNU General Public License along
 // with this program; if not, write to the Free Software Foundation, Inc.,
-// 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA. or 
+// 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA. or
 // visit www.gnu.org.
-// 
-// 
+//
+//
+using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Diagnostics;
-using System.Runtime.InteropServices;
 
 namespace LibUsbDotNet.Info
 {
     /// <summary> Contains all Configuration information for the current <see cref="T:LibUsbDotNet.UsbDevice"/>.
-    /// </summary> 
+    /// </summary>
     public class UsbConfigInfo : UsbBaseInfo
     {
         private readonly List<UsbInterfaceInfo> interfaces = new List<UsbInterfaceInfo>();
@@ -41,10 +41,11 @@ namespace LibUsbDotNet.Info
             value.Configuration = device.GetStringDescriptor(descriptor.Configuration, failSilently: true);
             value.ConfigurationValue = descriptor.ConfigurationValue;
 
-            value.mRawDescriptors = new byte[descriptor.ExtraLength];
+            value.RawDescriptors = new byte[descriptor.ExtraLength];
             if (descriptor.ExtraLength > 0)
             {
-                Marshal.Copy(descriptor.Extra, value.mRawDescriptors, 0, descriptor.ExtraLength);
+                Span<byte> extra = new Span<byte>(descriptor.Extra, descriptor.ExtraLength);
+                extra.CopyTo(value.RawDescriptors);
             }
 
             var interfaces = (Interface*)descriptor.Interface;
@@ -59,17 +60,20 @@ namespace LibUsbDotNet.Info
             return value;
         }
 
-        public string Configuration { get; protected set; }
-        public byte Attributes { get; protected set; }
-        public int ConfigurationValue { get; protected set; }
-        public byte MaxPower { get; protected set; }
+        public virtual string Configuration { get; protected set; }
+
+        public virtual byte Attributes { get; protected set; }
+
+        public virtual int ConfigurationValue { get; protected set; }
+
+        public virtual byte MaxPower { get; protected set; }
 
         /// <summary>
         /// Gets the collection of USB device interfaces associated with this <see cref="UsbConfigInfo"/> instance.
         /// </summary>
-        public ReadOnlyCollection<UsbInterfaceInfo> Interfaces
+        public virtual ReadOnlyCollection<UsbInterfaceInfo> Interfaces
         {
-            get { return interfaces.AsReadOnly(); }
+            get { return this.interfaces.AsReadOnly(); }
         }
 
         /// <inheritdoc/>

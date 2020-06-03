@@ -17,8 +17,46 @@
 // with this program; if not, write to the Free Software Foundation, Inc.,
 // 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA. or
 // visit www.gnu.org.
-//
-//
-using System.Runtime.CompilerServices;
 
-[assembly: InternalsVisibleTo("LibUsbDotNet.Tests, PublicKey=0024000004800000940000000602000000240000525341310004000001000100a777d8f4f7b64f8147b35be95c1e224d3b9899d5ed28ba6ea9d078ac18a2907658e6e6424eff30f45e9544b01544ea56c28417b5b58339a313baa34a4baa77d85efc75f412d0aecc82f01579b0b51b8285ea7e63c7bf1e8307ab7f698bff5682fc57ee8dce76dd59fc383e1499135a5fa044605fec22230270a36102f34722be")]
+using System;
+using System.Runtime.InteropServices;
+
+namespace LibUsbDotNet.Descriptors
+{
+    internal abstract class UsbMemChunk
+    {
+        private readonly int mMaxSize;
+
+        private IntPtr mMemPointer = IntPtr.Zero;
+
+        protected UsbMemChunk(int maxSize)
+        {
+            this.mMaxSize = maxSize;
+            this.mMemPointer = Marshal.AllocHGlobal(maxSize);
+        }
+
+        public int MaxSize
+        {
+            get { return this.mMaxSize; }
+        }
+
+        public IntPtr Ptr
+        {
+            get { return this.mMemPointer; }
+        }
+
+        public void Free()
+        {
+            if (this.mMemPointer != IntPtr.Zero)
+            {
+                Marshal.FreeHGlobal(this.mMemPointer);
+                this.mMemPointer = IntPtr.Zero;
+            }
+        }
+
+        ~UsbMemChunk()
+        {
+            this.Free();
+        }
+    }
+}

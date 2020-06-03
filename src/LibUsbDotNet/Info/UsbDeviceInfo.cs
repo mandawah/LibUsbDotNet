@@ -1,24 +1,22 @@
 // Copyright © 2006-2010 Travis Robinson. All rights reserved.
-// 
+//
 // website: http://sourceforge.net/projects/libusbdotnet
 // e-mail:  libusbdotnet@gmail.com
-// 
+//
 // This program is free software; you can redistribute it and/or modify it
 // under the terms of the GNU General Public License as published by the
-// Free Software Foundation; either version 2 of the License, or 
+// Free Software Foundation; either version 2 of the License, or
 // (at your option) any later version.
-// 
-// This program is distributed in the hope that it will be useful, but 
+//
+// This program is distributed in the hope that it will be useful, but
 // WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
 // or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
 // for more details.
-// 
+//
 // You should have received a copy of the GNU General Public License along
 // with this program; if not, write to the Free Software Foundation, Inc.,
-// 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA. or 
+// 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA. or
 // visit www.gnu.org.
-// 
-// 
 
 using System.Collections.ObjectModel;
 using System.Diagnostics;
@@ -26,12 +24,19 @@ using System.Diagnostics;
 namespace LibUsbDotNet.Info
 {
     /// <summary> Contains USB device descriptor information.
-    /// </summary> 
+    /// </summary>
     public class UsbDeviceInfo
     {
+        /// <summary>
+        /// Initializes a new instance of the <see cref="UsbDeviceInfo"/> class.
+        /// </summary>
+        protected UsbDeviceInfo()
+        {
+        }
+
         private readonly Collection<UsbConfigInfo> configurations = new Collection<UsbConfigInfo>();
 
-        public static UsbDeviceInfo FromUsbDeviceDescriptor(LibUsb.UsbDevice device, DeviceDescriptor descriptor)
+        public static UsbDeviceInfo FromUsbDeviceDescriptor(LibUsb.IUsbDevice device, DeviceDescriptor descriptor)
         {
             Debug.Assert(descriptor.DescriptorType == (int)DescriptorType.Device, "A config descriptor was expected");
 
@@ -47,8 +52,10 @@ namespace LibUsbDotNet.Info
 
             for (byte i = 0; i < descriptor.NumConfigurations; i++)
             {
-                var configDescriptor = device.GetConfigDescriptor(i);
-                value.configurations.Add(configDescriptor);
+                if (device.TryGetConfigDescriptor(i, out var configDescriptor))
+                {
+                    value.configurations.Add(configDescriptor);
+                }
             }
 
             value.Product = device.GetStringDescriptor(descriptor.Product, failSilently: true);
@@ -57,19 +64,34 @@ namespace LibUsbDotNet.Info
             return value;
         }
 
-        public ushort Device { get; protected set; }
-        public byte DeviceClass { get; protected set; }
-        public byte DeviceProtocol { get; protected set; }
-        public byte DeviceSubClass { get; protected set; }
-        public ushort ProductId { get; protected set; }
-        public ushort VendorId { get; protected set; }
-        public string Manufacturer { get; protected set; }
-        public byte MaxPacketSize0 { get; protected set; }
-        public byte NumConfigurations { get; protected set; }
-        public string Product { get; protected set; }
-        public string SerialNumber { get; protected set; }
-        public ushort Usb { get; protected set; }
-        public ReadOnlyCollection<UsbConfigInfo> Configurations { get { return new ReadOnlyCollection<UsbConfigInfo>(this.configurations); } }
+        public virtual ushort Device { get; protected set; }
+
+        public virtual byte DeviceClass { get; protected set; }
+
+        public virtual byte DeviceProtocol { get; protected set; }
+
+        public virtual byte DeviceSubClass { get; protected set; }
+
+        public virtual ushort ProductId { get; protected set; }
+
+        public virtual ushort VendorId { get; protected set; }
+
+        public virtual string Manufacturer { get; protected set; }
+
+        public virtual byte MaxPacketSize0 { get; protected set; }
+
+        public virtual byte NumConfigurations { get; protected set; }
+
+        public virtual string Product { get; protected set; }
+
+        public virtual string SerialNumber { get; protected set; }
+
+        public virtual ushort Usb { get; protected set; }
+
+        public virtual ReadOnlyCollection<UsbConfigInfo> Configurations
+        {
+            get { return new ReadOnlyCollection<UsbConfigInfo>(this.configurations); }
+        }
 
         public override string ToString()
         {
