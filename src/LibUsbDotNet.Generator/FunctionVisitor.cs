@@ -9,6 +9,7 @@ using System.Collections.ObjectModel;
 using System.Diagnostics;
 using System.Linq;
 using System.Text;
+using Core.Clang.Documentation.Doxygen;
 
 namespace LibUsbDotNet.Generator
 {
@@ -135,7 +136,7 @@ namespace LibUsbDotNet.Generator
             // - Full Comment
             // - Paragraph Comment or ParamCommand comment
             // - Text Comment
-            var fullComment = cursor.GetParsedComment();
+            var fullComment = cursor. GetCommentRange(); GetParsedComment();
             var fullCommentKind = fullComment.Kind;
             var fullCommentChildren = fullComment.GetNumChildren();
 
@@ -194,11 +195,11 @@ namespace LibUsbDotNet.Generator
 
         private void GetCommentInnerText(Comment comment, StringBuilder builder)
         {
-            var commentKind = comment.Kind;
+            var commentKind = comment.GetKind();
 
             if (commentKind == CommentKind.Text)
             {
-                var text = comment.GetText();
+                var text = comment.GetNormalizedText();
                 text = text.Trim();
 
                 if (!string.IsNullOrWhiteSpace(text))
@@ -214,7 +215,7 @@ namespace LibUsbDotNet.Generator
 
                 for (int i = 0; i < childCount; i++)
                 {
-                    var child = comment.GetChild(i);
+                    var child = comment.GetChild((uint)i);
                     this.GetCommentInnerText(child, builder);
                 }
             }

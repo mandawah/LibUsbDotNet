@@ -18,7 +18,7 @@ namespace Examples
         #endregion
 
         /// <summary>Use the first read endpoint</summary>
-        public static readonly byte TRANFER_ENDPOINT = UsbConstants.ENDPOINT_DIR_MASK;
+        public static readonly byte TRANFER_ENDPOINT = UsbConstants.EndpointDirectionMask;
 
         /// <summary>Number of transfers to sumbit before waiting begins</summary>
         public static readonly int TRANFER_MAX_OUTSTANDING_IO = 3;
@@ -32,7 +32,7 @@ namespace Examples
         private static DateTime mStartTime = DateTime.MinValue;
         private static double mTotalBytes = 0.0;
         private static int mTransferCount = 0;
-        public static UsbDevice MyUsbDevice;
+        public static IUsbDevice MyUsbDevice;
 
         public static void Main(string[] args)
         {

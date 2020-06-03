@@ -185,6 +185,7 @@ namespace LibUsbDotNet.LibUsb
             if (this.eventHandlingThread == null)
             {
                 this.eventHandlingThread = new Thread(this.HandleEvents);
+                eventHandlingThread.IsBackground = true;
                 this.shouldHandleEvents = true;
                 this.eventHandlingThread.Start();
             }
@@ -192,6 +193,9 @@ namespace LibUsbDotNet.LibUsb
 
         public void StopHandlingEvents()
         {
+	        DebugHelper.WriteLine();
+	        NativeMethods.InterruptEventHandler(this.context);
+	        DebugHelper.WriteLine();
             if (this.eventHandlingThread != null)
             {
                 this.shouldHandleEvents = false;
@@ -220,10 +224,13 @@ namespace LibUsbDotNet.LibUsb
 
         private void HandleEvents()
         {
+            var timeout = new UnixNativeTimeval(10000000, 0);
             while (this.shouldHandleEvents)
             {
                 int completed = this.shouldHandleEvents ? 0 : 1;
-                NativeMethods.HandleEventsCompleted(this.context, ref completed).ThrowOnError();
+                DebugHelper.WriteLine();
+                NativeMethods.HandleEventsTimeoutCompleted(this.context, ref timeout, ref completed).ThrowOnError();
+                DebugHelper.WriteLine();
             }
         }
     }

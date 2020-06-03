@@ -29,9 +29,12 @@
 // 
 //
 
+#define LINUX_ARM64
+
 using LibUsbDotNet.LibUsb;
 using System;
 using System.Runtime.InteropServices;
+
 
 namespace LibUsbDotNet
 {

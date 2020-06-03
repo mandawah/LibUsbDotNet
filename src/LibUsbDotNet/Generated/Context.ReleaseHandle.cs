@@ -27,7 +27,9 @@ namespace LibUsbDotNet
         /// <inheritdoc/>
         protected override bool ReleaseHandle()
         {
+	        DebugHelper.WriteLine();
             NativeMethods.Exit(this.handle);
+            DebugHelper.WriteLine();
             return true;
         }
     }
