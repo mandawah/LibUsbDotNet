@@ -22,6 +22,7 @@
 using System;
 using System.Runtime.InteropServices;
 using System.Threading;
+using System.Threading.Tasks;
 using LibUsbDotNet.Main;
 
 namespace LibUsbDotNet.LibUsb
@@ -63,9 +64,9 @@ namespace LibUsbDotNet.LibUsb
         /// <returns>
         /// <see cref="Error"/>.<see cref="Error.None"/> on success.
         /// </returns>
-        public virtual Error Read(byte[] buffer, int timeout, out int transferLength)
+        public virtual ValueTask<int> Read(byte[] buffer, int timeout)
         {
-            return this.Read(buffer, 0, buffer.Length, timeout, out transferLength);
+            return this.Read(buffer, 0, buffer.Length, timeout);
         }
 
         /// <summary>
@@ -79,9 +80,9 @@ namespace LibUsbDotNet.LibUsb
         /// <returns>
         /// <see cref="Error"/>.<see cref="Error.None"/> on success.
         /// </returns>
-        public virtual Error Read(IntPtr buffer, int offset, int count, int timeout, out int transferLength)
+        public virtual ValueTask<int> Read(IntPtr buffer, int offset, int count, int timeout)
         {
-            return this.Transfer(buffer, offset, count, timeout, out transferLength);
+            return this.Transfer(buffer, offset, count, timeout);
         }
 
         /// <summary>
@@ -95,9 +96,9 @@ namespace LibUsbDotNet.LibUsb
         /// <returns>
         /// <see cref="Error"/>.<see cref="Error.None"/> on success.
         /// </returns>
-        public virtual Error Read(byte[] buffer, int offset, int count, int timeout, out int transferLength)
+        public virtual ValueTask<int> Read(byte[] buffer, int offset, int count, int timeout)
         {
-            return this.Transfer(buffer, offset, count, timeout, out transferLength);
+            return this.Transfer(buffer, offset, count, timeout);
         }
 
         /// <summary>
@@ -111,9 +112,9 @@ namespace LibUsbDotNet.LibUsb
         /// <returns>
         /// <see cref="Error"/>.<see cref="Error.None"/> on success.
         /// </returns>
-        public virtual Error Read(object buffer, int offset, int count, int timeout, out int transferLength)
+        public virtual ValueTask<int> Read(object buffer, int offset, int count, int timeout)
         {
-            return this.Transfer(buffer, offset, count, timeout, out transferLength);
+            return this.Transfer(buffer, offset, count, timeout);
         }
 
         /// <summary>
@@ -125,26 +126,9 @@ namespace LibUsbDotNet.LibUsb
         /// <returns>
         /// <see cref="Error"/>.<see cref="Error.None"/> on success.
         /// </returns>
-        public virtual Error Read(object buffer, int timeout, out int transferLength)
+        public virtual ValueTask<int> Read(object buffer, int timeout)
         {
-            return this.Transfer(buffer, 0, Marshal.SizeOf(buffer), timeout, out transferLength);
-        }
-
-        /// <summary>
-        /// Reads/discards data from the enpoint until no more data is available.
-        /// </summary>
-        /// <returns>Alwats returns <see cref="Error.None"/> </returns>
-        public virtual Error ReadFlush()
-        {
-            byte[] bufDummy = new byte[64];
-            int iTransferred;
-            int iBufCount = 0;
-            while (this.Read(bufDummy, 10, out iTransferred) == Error.Success && iBufCount < 128)
-            {
-                iBufCount++;
-            }
-
-            return Error.Success;
+            return this.Transfer(buffer, 0, Marshal.SizeOf(buffer), timeout);
         }
     }
 }

@@ -22,6 +22,8 @@
 using LibUsbDotNet.Info;
 using LibUsbDotNet.Main;
 using System;
+using System.Threading;
+using System.Threading.Tasks;
 
 namespace LibUsbDotNet.LibUsb
 {
@@ -101,27 +103,30 @@ namespace LibUsbDotNet.LibUsb
         /// <param name="timeout">Maximum time to wait for the transfer to complete.</param>
         /// <param name="transferLength">Number of bytes actually transferred.</param>
         /// <returns>True on success.</returns>
-        public virtual unsafe Error Transfer(IntPtr buffer, int offset, int length, int timeout, out int transferLength)
+        public ValueTask<int> Transfer(IntPtr buffer, int offset, int length, int timeout, CancellationToken token)
         {
-            int transferred = 0;
-            Error returnValue = 0;
-
+            var transferred = 0;
+            
             switch (this.mEndpointType)
             {
 				case EndpointType.Bulk:
-					returnValue = NativeMethods.BulkTransfer(this.Device.DeviceHandle, this.mEpNum, (byte*)buffer + offset, length, ref transferred, (uint)timeout);
-					transferLength = transferred;
-					return returnValue;
+					unsafe
+					{
+						NativeMethods.BulkTransfer(this.Device.DeviceHandle, this.mEpNum, (byte*) buffer + offset, length, ref transferred, (uint) timeout).ThrowOnError();
+                        return new ValueTask<int>(transferred);
+					}
 
 				case EndpointType.Interrupt:
-                    returnValue = NativeMethods.InterruptTransfer(this.Device.DeviceHandle, this.mEpNum, (byte*)buffer + offset, length, ref transferred, (uint)timeout);
-                    transferLength = transferred;
-                    return returnValue;
+					unsafe
+					{
+						NativeMethods.InterruptTransfer(this.Device.DeviceHandle, this.mEpNum, (byte*) buffer + offset, length, ref transferred, (uint) timeout).ThrowOnError();
+						return new ValueTask<int>(transferred);
+					}
 
-                case EndpointType.Isochronous:
+				case EndpointType.Isochronous:
                 case EndpointType.Control:
                 default:
-                    return AsyncTransfer.TransferAsync(this.Device.DeviceHandle, this.mEpNum, this.mEndpointType, buffer, offset, length, timeout, EndpointInfo.MaxPacketSize, out transferLength);
+                    return AsyncTransfer.TransferAsync(this.Device.DeviceHandle, this.mEpNum, this.mEndpointType, buffer, offset, length, timeout, EndpointInfo.MaxPacketSize, token);
             }
         }
 
@@ -203,12 +208,10 @@ namespace LibUsbDotNet.LibUsb
         /// <param name="timeout">Maximum time to wait for the transfer to complete.</param>
         /// <param name="transferLength">Number of bytes actually transferred.</param>
         /// <returns>True on success.</returns>
-        public Error Transfer(object buffer, int offset, int length, int timeout, out int transferLength)
+        public async ValueTask<int> Transfer(object buffer, int offset, int length, int timeout)
         {
-            PinnedHandle pinned = new PinnedHandle(buffer);
-            Error eReturn = this.Transfer(pinned.Handle, offset, length, timeout, out transferLength);
-            pinned.Dispose();
-            return eReturn;
+            var pinned = new PinnedHandle(buffer);
+            return await this.Transfer(pinned.Handle, offset, length, timeout, CancellationToken.None);
         }
 
         #region Nested type: TransferDelegate

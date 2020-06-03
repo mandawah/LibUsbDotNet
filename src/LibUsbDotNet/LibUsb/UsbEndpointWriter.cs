@@ -22,6 +22,7 @@
 using LibUsbDotNet.Main;
 using System;
 using System.Runtime.InteropServices;
+using System.Threading.Tasks;
 
 namespace LibUsbDotNet.LibUsb
 {
@@ -43,9 +44,9 @@ namespace LibUsbDotNet.LibUsb
         /// <returns>
         /// <see cref="Error"/>.<see cref="Error.None"/> on success.
         /// </returns>
-        public virtual Error Write(byte[] buffer, int timeout, out int transferLength)
+        public virtual ValueTask<int> Write(byte[] buffer, int timeout)
         {
-            return this.Write(buffer, 0, buffer.Length, timeout, out transferLength);
+            return this.Write(buffer, 0, buffer.Length, timeout);
         }
 
         /// <summary>
@@ -59,9 +60,9 @@ namespace LibUsbDotNet.LibUsb
         /// <returns>
         /// <see cref="Error"/>.<see cref="Error.None"/> on success.
         /// </returns>
-        public virtual Error Write(IntPtr pBuffer, int offset, int count, int timeout, out int transferLength)
+        public virtual ValueTask<int> Write(IntPtr pBuffer, int offset, int count, int timeout)
         {
-            return this.Transfer(pBuffer, offset, count, timeout, out transferLength);
+            return this.Transfer(pBuffer, offset, count, timeout);
         }
 
         /// <summary>
@@ -75,9 +76,9 @@ namespace LibUsbDotNet.LibUsb
         /// <returns>
         /// <see cref="Error"/>.<see cref="Error.None"/> on success.
         /// </returns>
-        public virtual Error Write(byte[] buffer, int offset, int count, int timeout, out int transferLength)
+        public virtual ValueTask<int> Write(byte[] buffer, int offset, int count, int timeout)
         {
-            return this.Transfer(buffer, offset, count, timeout, out transferLength);
+            return this.Transfer(buffer, offset, count, timeout);
         }
 
         /// <summary>
@@ -91,9 +92,9 @@ namespace LibUsbDotNet.LibUsb
         /// <returns>
         /// <see cref="Error"/>.<see cref="Error.None"/> on success.
         /// </returns>
-        public virtual Error Write(object buffer, int offset, int count, int timeout, out int transferLength)
+        public virtual ValueTask<int> Write(object buffer, int offset, int count, int timeout)
         {
-            return this.Transfer(buffer, offset, count, timeout, out transferLength);
+            return this.Transfer(buffer, offset, count, timeout);
         }
 
         /// <summary>
@@ -105,9 +106,9 @@ namespace LibUsbDotNet.LibUsb
         /// <returns>
         /// <see cref="Error"/>.<see cref="Error.None"/> on success.
         /// </returns>
-        public virtual Error Write(object buffer, int timeout, out int transferLength)
+        public virtual ValueTask<int> Write(object buffer, int timeout)
         {
-            return this.Write(buffer, 0, Marshal.SizeOf(buffer), timeout, out transferLength);
+            return this.Write(buffer, 0, Marshal.SizeOf(buffer), timeout);
         }
     }
 }

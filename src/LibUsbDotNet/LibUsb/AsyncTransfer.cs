@@ -24,19 +24,20 @@ using System;
 using System.Collections.Concurrent;
 using System.Runtime.InteropServices;
 using System.Threading;
+using System.Threading.Tasks;
 
 namespace LibUsbDotNet.LibUsb
 {
     public class AsyncTransfer
     {
-        private static readonly ConcurrentDictionary<int, ManualResetEventSlim> Transfers = new ConcurrentDictionary<int, ManualResetEventSlim>();
-        private static readonly object TransferLock = new object();
-        private static int transferIndex = 0;
-
+        private static readonly ConcurrentDictionary<int, TaskCompletionSource<int>> Transfers = new ConcurrentDictionary<int, TaskCompletionSource<int>>();
+        
         private static unsafe TransferDelegate transferDelegate = new TransferDelegate(Callback);
         private static IntPtr transferDelegatePtr = Marshal.GetFunctionPointerForDelegate(transferDelegate);
 
-		public static unsafe Error TransferAsync(
+        private static int TransferId;
+
+		public static async ValueTask<int> TransferAsync(
             DeviceHandle device,
             byte endPoint,
             EndpointType endPointType,
@@ -45,7 +46,7 @@ namespace LibUsbDotNet.LibUsb
             int length,
             int timeout,
             int isoPacketSize,
-            out int transferLength)
+            CancellationToken cancellationToken = default)
         {
             if (device == null)
             {
@@ -67,93 +68,95 @@ namespace LibUsbDotNet.LibUsb
 
             DebugHelper.WriteLine($"IsoSize={isoPacketSize} -> {numIsoPackets}");
 
-            var transfer = NativeMethods.AllocTransfer(numIsoPackets);
+			DebugHelper.WriteLine();
+
+            
+            Interlocked.Increment(ref TransferId);
+
+            var taskCompletionSource = new TaskCompletionSource<int>(TaskCreationOptions.RunContinuationsAsynchronously); //use a pool for avoiding allocation? No cannot since one cannot reset the object
+
+            Transfers[TransferId] = taskCompletionSource;
 
             DebugHelper.WriteLine();
 
-            ManualResetEventSlim mre = new ManualResetEventSlim(false);
+			CancellationTokenRegistration cancelRegister = default;
 
-            DebugHelper.WriteLine();
+			try
+			{
+				unsafe
+				{
+					var transfer = NativeMethods.AllocTransfer(numIsoPackets);
 
-            int transferId = 0;
+					DebugHelper.WriteLine();
+					//libusb_fill_iso_transfer 
+					// Fill common properties
+					transfer->DevHandle = device.DangerousGetHandle();
+					transfer->Endpoint = endPoint;
+					transfer->Timeout =3000;
+					transfer->Type = (byte) endPointType;
+					transfer->Buffer = (byte*) buffer + offset;
+					transfer->Length = length;
+					transfer->NumIsoPackets = numIsoPackets;
+					transfer->Flags = (byte) TransferFlags.None; //USE FREE TRANSFER AND REMOVE EXPLICIT CALL
+					transfer->Callback = transferDelegatePtr;
+					transfer->UserData = new IntPtr(TransferId);
 
-            lock (TransferLock)
-            {
-                transferId = transferIndex++;
-            }
+					DebugHelper.WriteLine();
+					NativeMethods.SubmitTransfer(transfer).ThrowOnError();
 
-            DebugHelper.WriteLine();
 
-            Transfers.AddOrUpdate(transferId, mre, (index, data) => throw new NotImplementedException());
+					// if(transfer->Status.) Find a way to not rely on semaphore if completed immediately
+					DebugHelper.WriteLine();
 
-            DebugHelper.WriteLine();
-            //libusb_fill_iso_transfer 
-            // Fill common properties
-            transfer->DevHandle = device.DangerousGetHandle();
-            transfer->Endpoint = endPoint;
-            transfer->Timeout = (uint)timeout;
-            transfer->Type = (byte)endPointType;
-            transfer->Buffer = (byte*)buffer + offset;
-            transfer->Length = length;
-            transfer->NumIsoPackets = numIsoPackets;
-            transfer->Flags = (byte)TransferFlags.None;
-            transfer->Callback = transferDelegatePtr;
-            transfer->UserData = new IntPtr(transferId);
+					cancelRegister = cancellationToken.Register(() =>
+					{
+						NativeMethods.CancelTransfer(transfer);
+					});
 
-            DebugHelper.WriteLine();
-            NativeMethods.SubmitTransfer(transfer).ThrowOnError();
-            DebugHelper.WriteLine();
-            transferLength = 0;
-            mre.Wait();
-            DebugHelper.WriteLine();
-            transferLength = transfer->ActualLength;
-            DebugHelper.WriteLine();
-            Error ret = Error.Success;
-            switch (transfer->Status)
-            {
-                case TransferStatus.Completed:
-                    ret = Error.Success;
-                    break;
-
-                case TransferStatus.TimedOut:
-                    ret = Error.Timeout;
-                    break;
-
-                case TransferStatus.Stall:
-                    ret = Error.Pipe;
-                    break;
-
-                case TransferStatus.Overflow:
-                    ret = Error.Overflow;
-                    break;
-
-                case TransferStatus.NoDevice:
-                    ret = Error.NoDevice;
-                    break;
-
-                case TransferStatus.Error:
-                case TransferStatus.Cancelled:
-                    ret = Error.Io;
-                    break;
-
-                default:
-                    ret = Error.Other;
-                    break;
-            }
-            DebugHelper.WriteLine();
-            NativeMethods.FreeTransfer(transfer);
-
-            return ret;
+					DebugHelper.WriteLine();
+				}
+				DebugHelper.WriteLine();
+				return await taskCompletionSource.Task; //need await becuase of cancellation registration
+			}
+			finally
+			{
+				cancelRegister.Dispose();
+			}
         }
 
         private static unsafe void Callback(Transfer* transfer)
         {
-	        DebugHelper.WriteLine();
-            int id = transfer->UserData.ToInt32();
-            Transfers.TryRemove(id, out ManualResetEventSlim transferData);
-            DebugHelper.WriteLine();
-            transferData.Set();
-            DebugHelper.WriteLine();
+	        try
+	        {
+		        DebugHelper.WriteLine();
+
+		        if (!Transfers.TryRemove(transfer->UserData.ToInt32(), out TaskCompletionSource<int> completionSource))
+		        {
+			        DebugHelper.WriteLine(transfer->Status.ToString());
+					throw new Exception("Completion source not found");
+		        }
+
+		        DebugHelper.WriteLine(transfer->Status.ToString());
+
+		        switch (transfer->Status)
+		        {
+					case TransferStatus.Completed:
+						completionSource.SetResult(transfer->ActualLength);
+						return;
+
+					case TransferStatus.Cancelled:
+						completionSource.SetCanceled();
+						return;
+
+			       default:
+				        completionSource.SetException(new UsbException(ErrorExtensions.ToError(transfer->Status)));
+				        return;
+		        }
+	        }
+	        finally
+	        {
+		        NativeMethods.FreeTransfer(transfer);
+	        }
         }
     }
 }

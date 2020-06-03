@@ -15,10 +15,10 @@ namespace TestEmbeddedUsb
 {
 	class Program
 	{
-		static void Main(string[] args)
+		static async Task Main(string[] args)
 		{
 			var context = new UsbContext();
-			context.SetDebugLevel(LogLevel.Debug);
+			//context.SetDebugLevel(LogLevel.Debug);
 
 			context.StartHandlingEvents();
 			
@@ -95,9 +95,9 @@ namespace TestEmbeddedUsb
 
 			var aclBuffer = new byte[64 * 1]; 
 
-			DebugHelper.WriteLine("Before ACL Read");
-			aclReader.Read(aclBuffer, 0, aclBuffer.Length, 3000, out var aclRead);
-			DebugHelper.WriteLine($"ACL Read {aclRead}");
+			//DebugHelper.WriteLine("Before ACL Read");
+			//var aclRead = await aclReader.Read(aclBuffer, 0, aclBuffer.Length, 3000);
+			//DebugHelper.WriteLine($"ACL Read {aclRead}");
 
 			var scoReader = ptsDevice.OpenEndpointReader((ReadEndpointID)bestEndpoint.EndpointAddress, -1, (EndpointType)(bestEndpoint.Attributes & 0x3));
 
@@ -106,7 +106,7 @@ namespace TestEmbeddedUsb
 			for (var i = 0; i < 1; ++i)
 			{
 				DebugHelper.WriteLine($"Before SCO Read");
-				scoReader.Read(scoBuffer, 0, scoBuffer.Length, 0, out var scoRead);
+				var scoRead = await scoReader.Read(scoBuffer, 0, scoBuffer.Length, 0);
 				DebugHelper.WriteLine($"SCO Read {scoRead}");
 			}
 			
