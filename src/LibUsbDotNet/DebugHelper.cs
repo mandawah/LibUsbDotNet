@@ -7,7 +7,7 @@ namespace LibUsbDotNet
 {
 	public static class DebugHelper
 	{
-		public static void WriteLine(string s = null,
+		public static void WriteLine(object s = null,
 			[CallerLineNumber] int lineNumber = 0,
 			[CallerMemberName] string caller = null,
 			[CallerFilePath] string file = null)

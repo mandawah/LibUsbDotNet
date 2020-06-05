@@ -36,7 +36,7 @@ namespace LibUsbDotNet.LibUsb
         private static unsafe TransferDelegate transferDelegate = new TransferDelegate(Callback);
         private static IntPtr transferDelegatePtr = Marshal.GetFunctionPointerForDelegate(transferDelegate);
 
-		public static unsafe Error TransferAsync(
+        public static unsafe Error TransferAsync(
             DeviceHandle device,
             byte endPoint,
             EndpointType endPointType,
@@ -85,10 +85,8 @@ namespace LibUsbDotNet.LibUsb
             DebugHelper.WriteLine();
 
             Transfers.AddOrUpdate(transferId, mre, (index, data) => throw new NotImplementedException());
-
-            DebugHelper.WriteLine();
-            //libusb_fill_iso_transfer 
-            // Fill common properties
+            
+			// Fill common properties
             transfer->DevHandle = device.DangerousGetHandle();
             transfer->Endpoint = endPoint;
             transfer->Timeout = (uint)timeout;
@@ -99,6 +97,25 @@ namespace LibUsbDotNet.LibUsb
             transfer->Flags = (byte)TransferFlags.None;
             transfer->Callback = transferDelegatePtr;
             transfer->UserData = new IntPtr(transferId);
+
+            DebugHelper.WriteLine($"Transfer@: {new IntPtr(transfer)}");
+            if (numIsoPackets > 0)
+            {
+				var descriptors = (IsoPacketDescriptor*)(&transfer->NumIsoPackets + 1);
+				DebugHelper.WriteLine($"descriptors@: {new IntPtr(descriptors)}");
+				for (var i = 0; i < numIsoPackets; ++i)
+				{
+					descriptors[i].Length = (uint)isoPacketSize;
+					descriptors[i].ActualLength = (uint)1234;
+					descriptors[i].Status = TransferStatus.Overflow;
+				}
+
+				//NativeMethods.SetIsoPacketLengths(transfer, (uint)isoPacketSize);
+
+    //            var descriptor0 = NativeMethods.GetIsoPacketBuffer(transfer, 0);
+				//DebugHelper.WriteLine($"descriptors@: {new IntPtr(descriptor0)}");
+				//DebugHelper.WriteLine($"descriptors[0]: {descriptor0->Length}; {descriptor0->ActualLength}; {descriptor0->Status}");
+            }
 
             DebugHelper.WriteLine();
             NativeMethods.SubmitTransfer(transfer).ThrowOnError();
@@ -142,15 +159,24 @@ namespace LibUsbDotNet.LibUsb
             }
             DebugHelper.WriteLine();
             NativeMethods.FreeTransfer(transfer);
-
+            
             return ret;
         }
 
         private static unsafe void Callback(Transfer* transfer)
         {
+	        var descriptors = (IsoPacketDescriptor*) (&transfer->NumIsoPackets + 1);
+	        for (var i = 0; i < 1; ++i)
+	        {
+		        DebugHelper.WriteLine($"{descriptors[i].Length}; {descriptors[i].ActualLength}; {descriptors[i].Status}");
+	        }
+
 	        DebugHelper.WriteLine();
             int id = transfer->UserData.ToInt32();
-            Transfers.TryRemove(id, out ManualResetEventSlim transferData);
+            if (!Transfers.TryRemove(id, out ManualResetEventSlim transferData))
+            {
+	            DebugHelper.WriteLine("IGNORING CALLBACK");
+            }
             DebugHelper.WriteLine();
             transferData.Set();
             DebugHelper.WriteLine();

@@ -242,6 +242,15 @@ namespace LibUsbDotNet
         [DllImport(LibUsbNativeLibrary, CallingConvention = LibUsbCallingConvention, EntryPoint = "libusb_transfer_get_stream_id")]
         public static extern uint TransferGetStreamId(Transfer* transfer);
 
+        [DllImport(LibUsbNativeLibrary, CallingConvention = LibUsbCallingConvention, EntryPoint = "libusb_set_iso_packet_lengths")]
+        public static extern void SetIsoPacketLengths(Transfer* transfer, uint length);
+ 
+        [DllImport(LibUsbNativeLibrary, CallingConvention = LibUsbCallingConvention, EntryPoint = "libusb_get_iso_packet_buffer")]
+        public static extern IsoPacketDescriptor* GetIsoPacketBuffer(Transfer* transfer, uint packet);
+ 
+        [DllImport(LibUsbNativeLibrary, CallingConvention = LibUsbCallingConvention, EntryPoint = "libusb_get_iso_packet_buffer_simple")]
+        public static extern IsoPacketDescriptor* GetIsoPacketBufferSimple(Transfer* transfer, uint packet);
+
         [DllImport(LibUsbNativeLibrary, CallingConvention = LibUsbCallingConvention, EntryPoint = "libusb_control_transfer")]
         public static extern int ControlTransfer(DeviceHandle devHandle, byte requestType, byte brequest, ushort wvalue, ushort windex, byte* data, ushort wlength, uint timeout);
 
