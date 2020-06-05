@@ -3,6 +3,8 @@ using System.Linq;
 using System.Reflection;
 using System.Text;
 using System.Threading;
+using System.Threading.Tasks;
+using LibUbsDotNet.NBS.TransferBufferAllocationManagement;
 using LibUsbDotNet;
 using LibUsbDotNet.Info;
 using LibUsbDotNet.LibUsb;
@@ -11,11 +13,9 @@ namespace TestUsbNBS
 {
 	class Program
 	{
-		static void Main(string[] args)
+		static async Task Main(string[] args)
 		{
 			//UsbContext.Default.SetDebugLevel(LogLevel.Debug);
-
-			UsbContext.Default.NeedsEventHandling();
 
 			var deviceList = UsbContext.Default.GetDeviceList();
 			
@@ -33,7 +33,9 @@ namespace TestUsbNBS
 
 			//var ptsFinder = new UsbDeviceFinder(0x0A12, 0x1);
 
-			var ptsDevice = deviceList.FirstOrDefault();
+			//0xDEB1
+
+			var ptsDevice = deviceList.FirstOrDefault(device => device.VendorId == 0x1500 && device.ProductId == 0xDEB1);
 
 			if (ptsDevice == null)
 			{
@@ -44,26 +46,50 @@ namespace TestUsbNBS
 			if (!ptsDevice.TryOpen())
 			{
 				Console.WriteLine("Cannot Open");
+				return;
 			}
-			else
+
+			ptsDevice.DetachKernelDriver(0);
+			ptsDevice.DetachKernelDriver(1);
+			Console.WriteLine($"Detached 0!!");
+
+			if(ptsDevice.GetConfiguration() != 1)
 			{
 				ptsDevice.SetConfiguration(1);
-
-				ptsDevice.ClaimInterface(0);
-
-				Console.WriteLine($"Claimed 0!!");
-
-				ptsDevice.SetAltInterface(0, 0);
-
-				Thread.Sleep(30 * 1000);
 			}
 
-			Console.WriteLine($"Stopping");
+			//Console.WriteLine($"SetConfiguration 1!!");
 
-			UsbContext.Default.DoesntNeedEventHandlingAnymore();
+			ptsDevice.ClaimInterface(1);
+
+			Console.WriteLine($"Claimed!!");
+			
+			ptsDevice.SetAltInterface(1, 0);
+
+			var reporter = new ThroughputReporter();
+
+			var bulkReader = new AsyncBulkTransferRunner<byte[]>(ptsDevice, 0x81, SimpleByteArrayCopyTransferManagement.CreateManagements(4),
+				(in byte[] data) =>
+				{
+					//Console.WriteLine($"Received {data.Length:D2} bytes : {new string(data.Select(b => (char)b).ToArray()),40}");
+					reporter.AddReceptionCount(data.Length);
+					return default;
+				},
+				error =>
+				{
+					Console.WriteLine($"Error {error}");
+				}
+				);
+
+			bulkReader.StartReceive();
+
+			await Task.Delay(10*1000);
+
+			Console.WriteLine($"Dispose");
+
+			bulkReader.Dispose();
+
 			Console.WriteLine($"Bye!");
-			return;
-
 		}
 
 		private static string GetDescriptorReport(UsbDevice usbDevice)
@@ -125,4 +151,111 @@ namespace TestUsbNBS
 			}
 		}
 	}
+
+	public class ThroughputReporter : IDisposable
+    {
+		private readonly CancellationTokenSource m_cancellationTokenSource = new CancellationTokenSource();
+
+		private long m_sentTotalCount;
+		private long m_sentTotalCall;
+
+		private long m_receptionTotalCount;
+		private long m_receptionTotalCall;
+
+		private long m_firstTick = -1;
+
+		public ThroughputReporter()
+		{
+			Run(m_cancellationTokenSource.Token);
+		}
+
+		public void AddReceptionCount(int count)
+		{
+			Interlocked.Add(ref m_receptionTotalCount, count);
+			Interlocked.Increment(ref m_receptionTotalCall);
+
+			if (m_firstTick == -1)
+			{
+				m_firstTick = DateTime.Now.Ticks;
+			}
+		}
+
+		public void AddSentCount(int count)
+		{
+			Interlocked.Add(ref m_sentTotalCount, count);
+			Interlocked.Increment(ref m_sentTotalCall);
+
+			if (m_firstTick == -1)
+			{
+				m_firstTick = DateTime.Now.Ticks;
+			}
+		}
+
+		private Task Run(CancellationToken token)
+		{
+			return Task.Factory.StartNew(
+				async () =>
+				{
+					long lastTick = DateTime.Now.Ticks;
+
+					long lastReceptionCount = 0;
+					long lastSentCount = 0;
+
+					long lastReceptionCall = 0;
+					long lastSentCall = 0;
+
+					while (!token.IsCancellationRequested)
+					{
+						var totalSentCount = Interlocked.Read(ref m_sentTotalCount);
+						var totalReceptionCount = Interlocked.Read(ref m_receptionTotalCount);
+
+						var totalSentCall = Interlocked.Read(ref m_sentTotalCall);
+						var totalReceptionCall = Interlocked.Read(ref m_receptionTotalCall);
+
+						var nowTick = DateTime.Now.Ticks;
+
+						var totalElapsedTick = nowTick - m_firstTick;
+
+						var receptionCountDiff = totalReceptionCount - lastReceptionCount;
+						var sentCountDiff = totalSentCount - lastSentCount;
+
+						var receptionCallDiff = totalReceptionCall - lastReceptionCall;
+						var sentCallDiff = totalSentCall - lastSentCall;
+
+						var elapsed = nowTick - lastTick;
+
+						lastTick = nowTick;
+						lastReceptionCount = totalReceptionCount;
+						lastSentCount = totalSentCount;
+						lastReceptionCall = totalReceptionCall;
+						lastSentCall = totalSentCall;
+
+						Console.WriteLine($"Rx: {MbPerSecond(receptionCountDiff, elapsed):N2} MByte/s [{Mb(m_receptionTotalCount):N2} Mbytes]  Tx: {MbPerSecond(sentCountDiff, elapsed):N2} MByte/s [{Mb(m_sentTotalCount):N2} Mbytes]    (Rx #: {KPerSec(receptionCallDiff, elapsed):N2} K   Tx #: {KPerSec(sentCallDiff, elapsed):N2} K)");
+
+						await Task.Delay(1000, token);
+					}
+				}, TaskCreationOptions.LongRunning | TaskCreationOptions.HideScheduler);
+		}
+
+		private double MbPerSecond(long count, long ticks)
+		{
+			return (1d * count / (1024 * 1024)) * 10000000 / ticks;
+		}
+
+		private double Mb(long count)
+		{
+			return (1d * count / (1024 * 1024));
+		}
+
+		private double KPerSec(long count, long ticks)
+		{
+			return (1d * count / (1000)) * 10000000 / ticks;
+		}
+
+		public void Dispose()
+		{
+			m_cancellationTokenSource.Cancel();
+			m_cancellationTokenSource.Dispose();
+		}
+    }
 }

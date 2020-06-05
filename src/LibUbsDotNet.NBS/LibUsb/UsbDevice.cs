@@ -30,6 +30,7 @@ namespace LibUsbDotNet.LibUsb
     public partial class UsbDevice : IDisposable
     {
         private bool disposed;
+       
 
         /// <summary>
         /// Initializes a new instance of the <see cref="UsbDevice"/> class.
@@ -38,20 +39,13 @@ namespace LibUsbDotNet.LibUsb
         /// A device handle for this device. In most cases, you will want to use the
         /// <see cref="UsbContext.List()"/> methods to list all devices.
         /// </param>
-        public UsbDevice(Device device)
+        internal UsbDevice(Device device, UsbContext context)
         {
-            if (device == null)
-            {
-                throw new ArgumentNullException(nameof(device));
-            }
-
-            if (device == Device.Zero || device.IsClosed || device.IsInvalid)
-            {
-                throw new ArgumentOutOfRangeException(nameof(device));
-            }
-
-            this.device = device;
+			this.device = device;
+			Context = context;
         }
+
+        internal UsbContext Context {get;}
 
         /// <inheritdoc/>
         public void Dispose()

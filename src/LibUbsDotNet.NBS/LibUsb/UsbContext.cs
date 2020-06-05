@@ -34,8 +34,7 @@ namespace LibUsbDotNet.LibUsb
         /// <summary>
         /// The native context.
         /// </summary>
-        private readonly Context context;
-
+        
 		/// <summary>
         /// Initializes a new instance of the <see cref="UsbContext"/> class.
         /// </summary>
@@ -43,13 +42,15 @@ namespace LibUsbDotNet.LibUsb
         {
             IntPtr contextHandle = IntPtr.Zero;
             NativeMethods.Init(ref contextHandle).ThrowOnError();
-            this.context = Context.DangerousCreate(contextHandle);
+            Context = Context.DangerousCreate(contextHandle);
         }
+
+        internal Context Context {get;}
 
         /// <inheritdoc/>
         public void SetDebugLevel(LogLevel level)
         {
-            NativeMethods.SetDebug(this.context, (int)level);
+            NativeMethods.SetDebug(Context, (int)level);
         }
 
         /// <summary>
@@ -71,7 +72,7 @@ namespace LibUsbDotNet.LibUsb
         public unsafe UsbDevice[] GetDeviceList()
         {
             IntPtr list = IntPtr.Zero;
-            var deviceCount = NativeMethods.GetDeviceList(this.context, ref list).ToInt32();
+            var deviceCount = NativeMethods.GetDeviceList(Context, ref list).ToInt32();
 
             var devices = new UsbDevice[deviceCount];
 
@@ -79,8 +80,14 @@ namespace LibUsbDotNet.LibUsb
 
             for (int i = 0; i < deviceCount; i++)
             {
-                Device device = Device.DangerousCreate(deviceList[i]);
-                devices[i] = new UsbDevice(device);
+                var device = Device.DangerousCreate(deviceList[i]);
+                
+                if (device == null || device == Device.Zero || device.IsClosed || device.IsInvalid)
+                {
+	                continue;
+                }
+
+                devices[i] = new UsbDevice(device, this);
             }
 
             NativeMethods.FreeDeviceList(list, unrefDevices: 0 /* Do not unreference the devices */);

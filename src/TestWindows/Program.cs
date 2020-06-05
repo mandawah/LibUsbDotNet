@@ -20,7 +20,7 @@ namespace TestEmbeddedUsb
 			var context = new UsbContext();
 			context.SetDebugLevel(LogLevel.Debug);
 
-			context.StartHandlingEvents();
+			//context.StartHandlingEvents();
 			
 			foreach (var device in context.List())
 			{
@@ -36,7 +36,7 @@ namespace TestEmbeddedUsb
 
 			//var ptsFinder = new UsbDeviceFinder(0x0A12, 0x1);
 
-			var ptsDevice = context.Find(device => device.VendorId == 0x5AC  && device.ProductId == 0x820B);
+			var ptsDevice = context.Find(device => device.VendorId == 0x1500  && device.ProductId == 0x0700);
 
 			if (ptsDevice == null)
 			{
@@ -49,8 +49,8 @@ namespace TestEmbeddedUsb
 				Console.WriteLine("Cannot Open");
 				return;
 			}
-
-			ptsDevice.SetConfiguration(1);
+			
+			//ptsDevice.SetConfiguration(1);
 			
 			ptsDevice.ClaimInterface(0);
 			//ptsDevice.SetAltInterface(0);

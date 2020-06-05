@@ -42,15 +42,12 @@ namespace LibUsbDotNet
     [SecurityPermission(SecurityAction.Demand, UnmanagedCode=true)]
     public partial class Device : SafeHandleZeroOrMinusOneIsInvalid
     {
-        private string creationStackTrace;
-
         /// <summary>
         /// Initializes a new instance of the <see cref="Device"/> class.
         /// </summary>
         protected Device() :
                 base(true)
         {
-            this.creationStackTrace = Environment.StackTrace;
         }
 
         /// <summary>
@@ -62,7 +59,6 @@ namespace LibUsbDotNet
         protected Device(bool ownsHandle) :
                 base(ownsHandle)
         {
-            this.creationStackTrace = Environment.StackTrace;
         }
 
         /// <summary>

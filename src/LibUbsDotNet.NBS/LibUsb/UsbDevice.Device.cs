@@ -164,7 +164,7 @@ namespace LibUsbDotNet.LibUsb
             }
             else
             {
-                return new UsbDevice(parent);
+                return new UsbDevice(parent, Context);
             }
         }
 

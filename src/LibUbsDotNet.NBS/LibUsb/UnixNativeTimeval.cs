@@ -41,6 +41,11 @@ namespace LibUsbDotNet.LibUsb
             get { return new UnixNativeTimeval(2, 0); }
         }
 
+        public static UnixNativeTimeval Zero
+        {
+	        get { return new UnixNativeTimeval(0, 0); }
+        }
+
         /// <summary>
         /// Timeval seconds property.
         /// </summary>

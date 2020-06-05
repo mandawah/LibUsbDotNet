@@ -9,7 +9,7 @@ namespace LibUsbDotNet.LibUsb
 		private Thread m_eventHandlingThread;
 		private int m_eventHandlingNeeds;
 		
-		public void NeedsEventHandling()
+		internal void NeedsEventHandling()
 		{
 			lock (this)
 			{
@@ -29,7 +29,7 @@ namespace LibUsbDotNet.LibUsb
 			}
 		}
 
-		public void DoesntNeedEventHandlingAnymore()
+		internal void DoesntNeedEventHandlingAnymore()
 		{
 			lock (this)
 			{
@@ -52,11 +52,22 @@ namespace LibUsbDotNet.LibUsb
 
 			while (!cancelToken.IsCancellationRequested)
 			{
-				var status = NativeMethods.HandleEventsTimeout(this.context, ref timeout);
-				
-				if (status != Error.Success)
+				try
 				{
-					Console.WriteLine($"Error {status} while handling events");
+					var status = NativeMethods.HandleEventsTimeout(this.Context, ref timeout);
+
+					if (status != Error.Success)
+					{
+						Console.WriteLine($"Error {status} while handling events");
+					}
+				}
+				catch (ThreadAbortException)
+				{
+					return;
+				}
+				catch (Exception ex)
+				{
+					Console.WriteLine($"Exception {ex} while handling events");
 				}
 			}
 

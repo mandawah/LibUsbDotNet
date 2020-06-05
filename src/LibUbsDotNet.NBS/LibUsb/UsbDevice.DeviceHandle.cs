@@ -71,24 +71,21 @@ namespace LibUsbDotNet.LibUsb
         /// in unconfigured state.
         /// </para>
         /// </remarks>
-        public int Configuration
+        public int GetConfiguration()
         {
-            get
-            {
-                this.EnsureNotDisposed();
-                this.EnsureOpen();
+	        this.EnsureNotDisposed();
+	        this.EnsureOpen();
 
-                int config = 0;
-                NativeMethods.GetConfiguration(this.deviceHandle, ref config).ThrowOnError();
-                return config;
-            }
+	        int config = 0;
+	        NativeMethods.GetConfiguration(this.deviceHandle, ref config).ThrowOnError();
+	        return config;
         }
 
         /// <inheritdoc/>
         public void SetConfiguration(int config)
         {
-            //this.EnsureNotDisposed();
-            //this.EnsureOpen();
+            this.EnsureNotDisposed();
+            this.EnsureOpen();
 
             NativeMethods.SetConfiguration(this.deviceHandle, config).ThrowOnError();
         }

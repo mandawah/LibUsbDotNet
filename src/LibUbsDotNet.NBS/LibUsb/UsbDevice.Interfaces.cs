@@ -19,30 +19,27 @@
 // visit www.gnu.org.
 
 using LibUsbDotNet.Main;
-using System.Collections.Generic;
 
 namespace LibUsbDotNet.LibUsb
 {
     // Implements functionality for the UsbDevice class, related to Interfaces
     public partial class UsbDevice
     {
+        public Error DetachKernelDriver(int interfaceID)
+        {
+	        return NativeMethods.DetachKernelDriver(deviceHandle, interfaceID);
+        }
+
         /// <summary>
         /// Claims the specified interface of the device.
         /// </summary>
         /// <param name="interfaceID">The interface to claim.</param>
         /// <returns>True on success.</returns>
-        public bool ClaimInterface(int interfaceID)
+        public void ClaimInterface(int interfaceID)
         {
-            //this.EnsureOpen();
+            this.EnsureOpen();
 
-            //if (this.mClaimedInterfaces.Contains(interfaceID))
-            //{
-            //    return true;
-            //}
-
-            NativeMethods.ClaimInterface(this.deviceHandle, interfaceID).ThrowOnError();
-            //this.mClaimedInterfaces.Add(interfaceID);
-            return true;
+			NativeMethods.ClaimInterface(this.deviceHandle, interfaceID).ThrowOnError();
         }
 
 		/// <summary>

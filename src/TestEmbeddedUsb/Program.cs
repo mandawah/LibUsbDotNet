@@ -21,7 +21,7 @@ namespace TestEmbeddedUsb
 			context.SetDebugLevel(LogLevel.Debug);
 
 			context.StartHandlingEvents();
-			
+
 			foreach (var device in context.List())
 			{
 				string sAdd = string.Format("Vid:0x{0:X4} Pid:0x{1:X4} (rev:{2})",
@@ -83,6 +83,7 @@ namespace TestEmbeddedUsb
 			ptsDevice.SetConfiguration(1);
 			
 			ptsDevice.ClaimInterface(0);
+			
 			ptsDevice.SetAltInterface(0);
 
 			ptsDevice.ClaimInterface(bestInterface);
@@ -91,22 +92,28 @@ namespace TestEmbeddedUsb
 			//ptsDevice.SetAltInterface(0); 
 			//largestPacketSize = 9;
 
-			var aclReader = ptsDevice.OpenEndpointReader((ReadEndpointID)0x82, -1, EndpointType.Bulk);
+			//var aclReader = ptsDevice.OpenEndpointReader((ReadEndpointID)0x82, -1, EndpointType.Bulk);
 
-			var aclBuffer = new byte[64 * 1]; 
+			//var aclBuffer = new byte[64 * 1]; 
 
-			DebugHelper.WriteLine("Before ACL Read");
-			aclReader.Read(aclBuffer, 0, aclBuffer.Length, 3000, out var aclRead);
-			DebugHelper.WriteLine($"ACL Read {aclRead}");
+			//DebugHelper.WriteLine("Before ACL Read");
+			//aclReader.Read(aclBuffer, 0, aclBuffer.Length, 3000, out var aclRead);
+			//DebugHelper.WriteLine($"ACL Read {aclRead}");
+
+
 
 			var scoReader = ptsDevice.OpenEndpointReader((ReadEndpointID)bestEndpoint.EndpointAddress, -1, (EndpointType)(bestEndpoint.Attributes & 0x3));
 
-			var scoBuffer = new byte[largestPacketSize * 1];
+			var scoBuffer = new byte[largestPacketSize * 128];
+
+			DebugHelper.WriteLine($"MaxIsoPacketSize : {((UsbDevice)ptsDevice).GetMaxIsoPacketSize(bestEndpoint.EndpointAddress)}");
+
+		
 
 			for (var i = 0; i < 1; ++i)
 			{
 				DebugHelper.WriteLine($"Before SCO Read");
-				scoReader.Read(scoBuffer, 0, scoBuffer.Length, 0, out var scoRead);
+				scoReader.Read(scoBuffer, 0, scoBuffer.Length, 3000, out var scoRead);
 				DebugHelper.WriteLine($"SCO Read {scoRead}");
 			}
 			

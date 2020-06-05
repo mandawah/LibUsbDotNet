@@ -109,9 +109,10 @@ namespace LibUsbDotNet.LibUsb
             switch (this.mEndpointType)
             {
 				case EndpointType.Bulk:
-					returnValue = NativeMethods.BulkTransfer(this.Device.DeviceHandle, this.mEpNum, (byte*)buffer + offset, length, ref transferred, (uint)timeout);
-					transferLength = transferred;
-					return returnValue;
+					//returnValue = NativeMethods.BulkTransfer(this.Device.DeviceHandle, this.mEpNum, (byte*)buffer + offset, length, ref transferred, (uint)timeout);
+					//transferLength = transferred;
+					//return returnValue;
+					return AsyncTransfer.TransferAsync(this.Device.DeviceHandle, this.mEpNum, this.mEndpointType, buffer, offset, length, timeout, 0, out transferLength);
 
 				case EndpointType.Interrupt:
                     returnValue = NativeMethods.InterruptTransfer(this.Device.DeviceHandle, this.mEpNum, (byte*)buffer + offset, length, ref transferred, (uint)timeout);

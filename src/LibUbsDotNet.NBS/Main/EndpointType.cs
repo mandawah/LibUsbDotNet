@@ -31,21 +31,23 @@ namespace LibUsbDotNet.Main
         /// <summary>
         /// Control endpoint type.
         /// </summary>
-        Control,
+        Control = 0,
 
         /// <summary>
         /// Isochronous endpoint type.
         /// </summary>
-        Isochronous,
+        Isochronous = 1,
 
         /// <summary>
         /// Bulk endpoint type.
         /// </summary>
-        Bulk,
+        Bulk = 2,
 
         /// <summary>
         /// Interrupt endpoint type.
         /// </summary>
-        Interrupt
+        Interrupt = 3,
+
+        BulkStream = 4
     }
 }
