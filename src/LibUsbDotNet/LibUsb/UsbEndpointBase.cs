@@ -210,11 +210,5 @@ namespace LibUsbDotNet.LibUsb
             pinned.Dispose();
             return eReturn;
         }
-
-        #region Nested type: TransferDelegate
-
-        internal delegate int TransferDelegate(IntPtr pBuffer, int bufferLength, out int lengthTransferred, int isoPacketSize, IntPtr pOverlapped);
-
-        #endregion
     }
 }

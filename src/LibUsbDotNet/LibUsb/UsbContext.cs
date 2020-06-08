@@ -95,14 +95,15 @@ namespace LibUsbDotNet.LibUsb
         /// </remarks>
         public unsafe UsbDeviceCollection List()
         {
-            IntPtr* list;
-            var deviceCount = NativeMethods.GetDeviceList(this.context, &list);
+            IntPtr list = IntPtr.Zero;
+            var deviceCount = NativeMethods.GetDeviceList(this.context, ref list);
 
             Collection<IUsbDevice> devices = new Collection<IUsbDevice>();
 
+            var deviceList = (IntPtr*)list.ToPointer();
             for (int i = 0; i < deviceCount.ToInt32(); i++)
             {
-                Device device = Device.DangerousCreate(list[i]);
+                Device device = Device.DangerousCreate(deviceList[i]);
                 devices.Add(new UsbDevice(device));
             }
 

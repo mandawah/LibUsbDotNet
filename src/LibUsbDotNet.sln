@@ -27,6 +27,8 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "LibUsbDotNet.Tests", "LibUs
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TestEmbeddedUsb", "TestEmbeddedUsb\TestEmbeddedUsb.csproj", "{0747AE7E-8C51-44CE-BBE7-ED7F17EA0B9E}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TestWindows", "TestWindows\TestWindows.csproj", "{7D7821C3-40DE-4290-8DD9-D5F5EB821CA0}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -169,6 +171,18 @@ Global
 		{0747AE7E-8C51-44CE-BBE7-ED7F17EA0B9E}.Release|x64.Build.0 = Release|Any CPU
 		{0747AE7E-8C51-44CE-BBE7-ED7F17EA0B9E}.Release|x86.ActiveCfg = Release|Any CPU
 		{0747AE7E-8C51-44CE-BBE7-ED7F17EA0B9E}.Release|x86.Build.0 = Release|Any CPU
+		{7D7821C3-40DE-4290-8DD9-D5F5EB821CA0}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{7D7821C3-40DE-4290-8DD9-D5F5EB821CA0}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{7D7821C3-40DE-4290-8DD9-D5F5EB821CA0}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{7D7821C3-40DE-4290-8DD9-D5F5EB821CA0}.Debug|x64.Build.0 = Debug|Any CPU
+		{7D7821C3-40DE-4290-8DD9-D5F5EB821CA0}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{7D7821C3-40DE-4290-8DD9-D5F5EB821CA0}.Debug|x86.Build.0 = Debug|Any CPU
+		{7D7821C3-40DE-4290-8DD9-D5F5EB821CA0}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{7D7821C3-40DE-4290-8DD9-D5F5EB821CA0}.Release|Any CPU.Build.0 = Release|Any CPU
+		{7D7821C3-40DE-4290-8DD9-D5F5EB821CA0}.Release|x64.ActiveCfg = Release|Any CPU
+		{7D7821C3-40DE-4290-8DD9-D5F5EB821CA0}.Release|x64.Build.0 = Release|Any CPU
+		{7D7821C3-40DE-4290-8DD9-D5F5EB821CA0}.Release|x86.ActiveCfg = Release|Any CPU
+		{7D7821C3-40DE-4290-8DD9-D5F5EB821CA0}.Release|x86.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

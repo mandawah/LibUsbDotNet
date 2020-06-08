@@ -87,8 +87,8 @@ namespace LibUsbDotNet.LibUsb
         /// <inheritdoc/>
         public void SetConfiguration(int config)
         {
-            this.EnsureNotDisposed();
-            this.EnsureOpen();
+            //this.EnsureNotDisposed();
+            //this.EnsureOpen();
 
             NativeMethods.SetConfiguration(this.deviceHandle, config).ThrowOnError();
         }

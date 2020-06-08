@@ -33,8 +33,8 @@ namespace LibUsbDotNet.LibUsb
         private static readonly object TransferLock = new object();
         private static int transferIndex = 0;
 
-        private static unsafe TransferDelegate transferDelegate = new TransferDelegate(Callback);
-        private static IntPtr transferDelegatePtr = Marshal.GetFunctionPointerForDelegate(transferDelegate);
+        //private static unsafe TransferDelegate transferDelegate = ;
+        private unsafe static IntPtr transferDelegatePtr = Marshal.GetFunctionPointerForDelegate(NativeMethods.TransferDelegate(Callback));
 
 		public static unsafe Error TransferAsync(
             DeviceHandle device,

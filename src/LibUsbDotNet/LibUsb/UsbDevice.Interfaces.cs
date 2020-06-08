@@ -36,15 +36,15 @@ namespace LibUsbDotNet.LibUsb
         /// <returns>True on success.</returns>
         public bool ClaimInterface(int interfaceID)
         {
-            this.EnsureOpen();
+            //this.EnsureOpen();
 
-            if (this.mClaimedInterfaces.Contains(interfaceID))
-            {
-                return true;
-            }
+            //if (this.mClaimedInterfaces.Contains(interfaceID))
+            //{
+            //    return true;
+            //}
 
             NativeMethods.ClaimInterface(this.deviceHandle, interfaceID).ThrowOnError();
-            this.mClaimedInterfaces.Add(interfaceID);
+            //this.mClaimedInterfaces.Add(interfaceID);
             return true;
         }
 

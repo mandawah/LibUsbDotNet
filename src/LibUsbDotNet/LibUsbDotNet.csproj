@@ -54,4 +54,10 @@
          and https://oren.codes/2018/07/09/create-and-pack-reference-assemblies-made-easy/ -->
     <ReferenceAssemblyProjectReference Include="..\refs\LibUsbDotNet.LibUsb.refs.csproj" />
   </ItemGroup>
+
+  <ItemGroup>
+    <None Update="libusb-1.0.dll">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+  </ItemGroup>
 </Project>
