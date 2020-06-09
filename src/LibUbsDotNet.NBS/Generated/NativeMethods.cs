@@ -352,8 +352,7 @@ namespace LibUsbDotNet
 
         public static readonly HotplugDeregisterCallbackPrototype HotplugDeregisterCallback;
 
-        public static readonly CallingConvention LibUsbCallingConvention;
-        public const int Pack  = 0; // To validate
+        public const int Pack  = 0; // To validate: does it really works like this?
 
         public delegate void AgnosticTransferDelegate(Transfer* transfer);
         public static readonly Func<AgnosticTransferDelegate, Delegate> TransferDelegate;
@@ -372,9 +371,6 @@ namespace LibUsbDotNet
 	        switch (Environment.OSVersion.Platform)
 	        {
 		        case PlatformID.Unix:
-
-			        LibUsbCallingConvention = LinuxNativeMethods.LibUsbCallingConvention;
-			        //Pack = LinuxNativeMethods.Pack;
 
 			        TransferDelegate = d => new LinuxNativeDelegate.TransferDelegate(d);
 			        HotplugCallbackFn = d => new LinuxNativeDelegate.HotplugCallbackFn(d);
@@ -558,10 +554,7 @@ namespace LibUsbDotNet
 
                  case PlatformID.MacOSX:
 	                 
-	                LibUsbCallingConvention = OsXNativeMethods.LibUsbCallingConvention;
-	                //Pack = OsXNativeMethods.Pack;
-
-	                TransferDelegate = d => new OsXNativeDelegate.TransferDelegate(d);
+					TransferDelegate = d => new OsXNativeDelegate.TransferDelegate(d);
 	                HotplugCallbackFn = d => new OsXNativeDelegate.HotplugCallbackFn(d);
 	                PollfdAddedDelegate = d => new OsXNativeDelegate.PollfdAddedDelegate(d);
 	                PollfdRemovedDelegate = d => new OsXNativeDelegate.PollfdRemovedDelegate(d);
@@ -743,187 +736,366 @@ namespace LibUsbDotNet
 
 				 default:
 
-					LibUsbCallingConvention = WindowsNativeMethods.LibUsbCallingConvention;
-					//Pack = WindowsNativeMethods.Pack;
+					 if (!Environment.Is64BitProcess)
+					 {
+						 TransferDelegate = d => new WindowsNativeDelegatex86.TransferDelegate(d);
+						 HotplugCallbackFn = d => new WindowsNativeDelegatex86.HotplugCallbackFn(d);
+						 PollfdAddedDelegate = d => new WindowsNativeDelegatex86.PollfdAddedDelegate(d);
+						 PollfdRemovedDelegate = d => new WindowsNativeDelegatex86.PollfdRemovedDelegate(d);
 
-					TransferDelegate = d => new WindowsNativeDelegate.TransferDelegate(d);
-					HotplugCallbackFn = d => new WindowsNativeDelegate.HotplugCallbackFn(d);
-					PollfdAddedDelegate = d => new WindowsNativeDelegate.PollfdAddedDelegate(d);
-					PollfdRemovedDelegate = d => new WindowsNativeDelegate.PollfdRemovedDelegate(d);
-					
-			        Init = WindowsNativeMethods.Init;
+						 Init = WindowsNativeMethodsx86.Init;
 
-			        Exit = WindowsNativeMethods.Exit;
+						 Exit = WindowsNativeMethodsx86.Exit;
 
-			        SetDebug = WindowsNativeMethods.SetDebug;
+						 SetDebug = WindowsNativeMethodsx86.SetDebug;
 
-			        GetVersion = WindowsNativeMethods.GetVersion;
+						 GetVersion = WindowsNativeMethodsx86.GetVersion;
 
-			        HasCapability = WindowsNativeMethods.HasCapability;
+						 HasCapability = WindowsNativeMethodsx86.HasCapability;
 
-			        ErrorName = WindowsNativeMethods.ErrorName;
+						 ErrorName = WindowsNativeMethodsx86.ErrorName;
 
-			        SetLocale = WindowsNativeMethods.SetLocale;
+						 SetLocale = WindowsNativeMethodsx86.SetLocale;
 
-			        StrError = WindowsNativeMethods.StrError;
+						 StrError = WindowsNativeMethodsx86.StrError;
 
-			        GetDeviceList = WindowsNativeMethods.GetDeviceList;
+						 GetDeviceList = WindowsNativeMethodsx86.GetDeviceList;
 
-			        FreeDeviceList = WindowsNativeMethods.FreeDeviceList;
+						 FreeDeviceList = WindowsNativeMethodsx86.FreeDeviceList;
 
-			        RefDevice = WindowsNativeMethods.RefDevice;
+						 RefDevice = WindowsNativeMethodsx86.RefDevice;
 
-			        UnrefDevice = WindowsNativeMethods.UnrefDevice;
+						 UnrefDevice = WindowsNativeMethodsx86.UnrefDevice;
 
-			        GetConfiguration = WindowsNativeMethods.GetConfiguration;
+						 GetConfiguration = WindowsNativeMethodsx86.GetConfiguration;
 
-			        GetDeviceDescriptor = WindowsNativeMethods.GetDeviceDescriptor;
+						 GetDeviceDescriptor = WindowsNativeMethodsx86.GetDeviceDescriptor;
 
-			        GetActiveConfigDescriptor = WindowsNativeMethods.GetActiveConfigDescriptor;
+						 GetActiveConfigDescriptor = WindowsNativeMethodsx86.GetActiveConfigDescriptor;
 
-			        GetConfigDescriptor = WindowsNativeMethods.GetConfigDescriptor;
+						 GetConfigDescriptor = WindowsNativeMethodsx86.GetConfigDescriptor;
 
-			        GetConfigDescriptorByValue = WindowsNativeMethods.GetConfigDescriptorByValue;
+						 GetConfigDescriptorByValue = WindowsNativeMethodsx86.GetConfigDescriptorByValue;
 
-			        FreeConfigDescriptor = WindowsNativeMethods.FreeConfigDescriptor;
+						 FreeConfigDescriptor = WindowsNativeMethodsx86.FreeConfigDescriptor;
 
-			        GetSsEndpointCompanionDescriptor = WindowsNativeMethods.GetSsEndpointCompanionDescriptor;
+						 GetSsEndpointCompanionDescriptor = WindowsNativeMethodsx86.GetSsEndpointCompanionDescriptor;
 
-			        FreeSsEndpointCompanionDescriptor = WindowsNativeMethods.FreeSsEndpointCompanionDescriptor;
+						 FreeSsEndpointCompanionDescriptor = WindowsNativeMethodsx86.FreeSsEndpointCompanionDescriptor;
 
-			        GetBosDescriptor = WindowsNativeMethods.GetBosDescriptor;
+						 GetBosDescriptor = WindowsNativeMethodsx86.GetBosDescriptor;
 
-			        FreeBosDescriptor = WindowsNativeMethods.FreeBosDescriptor;
+						 FreeBosDescriptor = WindowsNativeMethodsx86.FreeBosDescriptor;
 
-			        GetUsb20ExtensionDescriptor = WindowsNativeMethods.GetUsb20ExtensionDescriptor;
+						 GetUsb20ExtensionDescriptor = WindowsNativeMethodsx86.GetUsb20ExtensionDescriptor;
 
-			        FreeUsb20ExtensionDescriptor = WindowsNativeMethods.FreeUsb20ExtensionDescriptor;
+						 FreeUsb20ExtensionDescriptor = WindowsNativeMethodsx86.FreeUsb20ExtensionDescriptor;
 
-			        GetSsUsbDeviceCapabilityDescriptor = WindowsNativeMethods.GetSsUsbDeviceCapabilityDescriptor;
+						 GetSsUsbDeviceCapabilityDescriptor = WindowsNativeMethodsx86.GetSsUsbDeviceCapabilityDescriptor;
 
-			        FreeSsUsbDeviceCapabilityDescriptor = WindowsNativeMethods.FreeSsUsbDeviceCapabilityDescriptor;
+						 FreeSsUsbDeviceCapabilityDescriptor = WindowsNativeMethodsx86.FreeSsUsbDeviceCapabilityDescriptor;
 
-			        GetContainerIdDescriptor = WindowsNativeMethods.GetContainerIdDescriptor;
+						 GetContainerIdDescriptor = WindowsNativeMethodsx86.GetContainerIdDescriptor;
 
-			        FreeContainerIdDescriptor = WindowsNativeMethods.FreeContainerIdDescriptor;
+						 FreeContainerIdDescriptor = WindowsNativeMethodsx86.FreeContainerIdDescriptor;
 
-			        GetBusNumber = WindowsNativeMethods.GetBusNumber;
+						 GetBusNumber = WindowsNativeMethodsx86.GetBusNumber;
 
-			        GetPortNumber = WindowsNativeMethods.GetPortNumber;
+						 GetPortNumber = WindowsNativeMethodsx86.GetPortNumber;
 
-			        GetPortNumbers = WindowsNativeMethods.GetPortNumbers;
+						 GetPortNumbers = WindowsNativeMethodsx86.GetPortNumbers;
 
-			        GetPortPath = WindowsNativeMethods.GetPortPath;
+						 GetPortPath = WindowsNativeMethodsx86.GetPortPath;
 
-			        GetParent = WindowsNativeMethods.GetParent;
+						 GetParent = WindowsNativeMethodsx86.GetParent;
 
-			        GetDeviceAddress = WindowsNativeMethods.GetDeviceAddress;
+						 GetDeviceAddress = WindowsNativeMethodsx86.GetDeviceAddress;
 
-			        GetDeviceSpeed = WindowsNativeMethods.GetDeviceSpeed;
+						 GetDeviceSpeed = WindowsNativeMethodsx86.GetDeviceSpeed;
 
-			        GetMaxPacketSize = WindowsNativeMethods.GetMaxPacketSize;
+						 GetMaxPacketSize = WindowsNativeMethodsx86.GetMaxPacketSize;
 
-			        GetMaxIsoPacketSize = WindowsNativeMethods.GetMaxIsoPacketSize;
+						 GetMaxIsoPacketSize = WindowsNativeMethodsx86.GetMaxIsoPacketSize;
 
-			        Open = WindowsNativeMethods.Open;
+						 Open = WindowsNativeMethodsx86.Open;
 
-			        Close = WindowsNativeMethods.Close;
+						 Close = WindowsNativeMethodsx86.Close;
 
-			        GetDevice = WindowsNativeMethods.GetDevice;
+						 GetDevice = WindowsNativeMethodsx86.GetDevice;
 
-			        SetConfiguration = WindowsNativeMethods.SetConfiguration;
+						 SetConfiguration = WindowsNativeMethodsx86.SetConfiguration;
 
-			        ClaimInterface = WindowsNativeMethods.ClaimInterface;
+						 ClaimInterface = WindowsNativeMethodsx86.ClaimInterface;
 
-			        ReleaseInterface = WindowsNativeMethods.ReleaseInterface;
+						 ReleaseInterface = WindowsNativeMethodsx86.ReleaseInterface;
 
-			        OpenDeviceWithVidPid = WindowsNativeMethods.OpenDeviceWithVidPid;
+						 OpenDeviceWithVidPid = WindowsNativeMethodsx86.OpenDeviceWithVidPid;
 
-			        SetInterfaceAltSetting = WindowsNativeMethods.SetInterfaceAltSetting;
+						 SetInterfaceAltSetting = WindowsNativeMethodsx86.SetInterfaceAltSetting;
 
-			        ClearHalt = WindowsNativeMethods.ClearHalt;
+						 ClearHalt = WindowsNativeMethodsx86.ClearHalt;
 
-			        ResetDevice = WindowsNativeMethods.ResetDevice;
+						 ResetDevice = WindowsNativeMethodsx86.ResetDevice;
 
-			        AllocStreams = WindowsNativeMethods.AllocStreams;
+						 AllocStreams = WindowsNativeMethodsx86.AllocStreams;
 
-			        FreeStreams = WindowsNativeMethods.FreeStreams;
+						 FreeStreams = WindowsNativeMethodsx86.FreeStreams;
 
-			        DevMemAlloc = WindowsNativeMethods.DevMemAlloc;
+						 DevMemAlloc = WindowsNativeMethodsx86.DevMemAlloc;
 
-			        DevMemFree = WindowsNativeMethods.DevMemFree;
+						 DevMemFree = WindowsNativeMethodsx86.DevMemFree;
 
-			        KernelDriverActive = WindowsNativeMethods.KernelDriverActive;
+						 KernelDriverActive = WindowsNativeMethodsx86.KernelDriverActive;
 
-			        DetachKernelDriver = WindowsNativeMethods.DetachKernelDriver;
+						 DetachKernelDriver = WindowsNativeMethodsx86.DetachKernelDriver;
 
-			        AttachKernelDriver = WindowsNativeMethods.AttachKernelDriver;
+						 AttachKernelDriver = WindowsNativeMethodsx86.AttachKernelDriver;
 
-			        SetAutoDetachKernelDriver = WindowsNativeMethods.SetAutoDetachKernelDriver;
+						 SetAutoDetachKernelDriver = WindowsNativeMethodsx86.SetAutoDetachKernelDriver;
 
-			        AllocTransfer = WindowsNativeMethods.AllocTransfer;
+						 AllocTransfer = WindowsNativeMethodsx86.AllocTransfer;
 
-			        SubmitTransfer = WindowsNativeMethods.SubmitTransfer;
+						 SubmitTransfer = WindowsNativeMethodsx86.SubmitTransfer;
 
-			        CancelTransfer = WindowsNativeMethods.CancelTransfer;
+						 CancelTransfer = WindowsNativeMethodsx86.CancelTransfer;
 
-			        FreeTransfer = WindowsNativeMethods.FreeTransfer;
+						 FreeTransfer = WindowsNativeMethodsx86.FreeTransfer;
 
-			        TransferSetStreamId = WindowsNativeMethods.TransferSetStreamId;
+						 TransferSetStreamId = WindowsNativeMethodsx86.TransferSetStreamId;
 
-			        TransferGetStreamId = WindowsNativeMethods.TransferGetStreamId;
+						 TransferGetStreamId = WindowsNativeMethodsx86.TransferGetStreamId;
 
-			        ControlTransfer = WindowsNativeMethods.ControlTransfer;
+						 ControlTransfer = WindowsNativeMethodsx86.ControlTransfer;
 
-			        BulkTransfer = WindowsNativeMethods.BulkTransfer;
+						 BulkTransfer = WindowsNativeMethodsx86.BulkTransfer;
 
-			        InterruptTransfer = WindowsNativeMethods.InterruptTransfer;
+						 InterruptTransfer = WindowsNativeMethodsx86.InterruptTransfer;
 
-			        GetStringDescriptorAscii = WindowsNativeMethods.GetStringDescriptorAscii;
+						 GetStringDescriptorAscii = WindowsNativeMethodsx86.GetStringDescriptorAscii;
 
-			        TryLockEvents = WindowsNativeMethods.TryLockEvents;
+						 TryLockEvents = WindowsNativeMethodsx86.TryLockEvents;
 
-			        LockEvents = WindowsNativeMethods.LockEvents;
+						 LockEvents = WindowsNativeMethodsx86.LockEvents;
 
-			        UnlockEvents = WindowsNativeMethods.UnlockEvents;
+						 UnlockEvents = WindowsNativeMethodsx86.UnlockEvents;
 
-			        EventHandlingOk = WindowsNativeMethods.EventHandlingOk;
+						 EventHandlingOk = WindowsNativeMethodsx86.EventHandlingOk;
 
-			        EventHandlerActive = WindowsNativeMethods.EventHandlerActive;
+						 EventHandlerActive = WindowsNativeMethodsx86.EventHandlerActive;
 
-			        InterruptEventHandler = WindowsNativeMethods.InterruptEventHandler;
+						 InterruptEventHandler = WindowsNativeMethodsx86.InterruptEventHandler;
 
-			        LockEventWaiters = WindowsNativeMethods.LockEventWaiters;
+						 LockEventWaiters = WindowsNativeMethodsx86.LockEventWaiters;
 
-			        UnlockEventWaiters = WindowsNativeMethods.UnlockEventWaiters;
+						 UnlockEventWaiters = WindowsNativeMethodsx86.UnlockEventWaiters;
 
-			        WaitForEvent = WindowsNativeMethods.WaitForEvent;
+						 WaitForEvent = WindowsNativeMethodsx86.WaitForEvent;
 
-			        HandleEventsTimeout = WindowsNativeMethods.HandleEventsTimeout;
+						 HandleEventsTimeout = WindowsNativeMethodsx86.HandleEventsTimeout;
 
-			        HandleEventsTimeoutCompleted = WindowsNativeMethods.HandleEventsTimeoutCompleted;
+						 HandleEventsTimeoutCompleted = WindowsNativeMethodsx86.HandleEventsTimeoutCompleted;
 
-			        HandleEvents = WindowsNativeMethods.HandleEvents;
+						 HandleEvents = WindowsNativeMethodsx86.HandleEvents;
 
-			        HandleEventsCompleted = WindowsNativeMethods.HandleEventsCompleted;
+						 HandleEventsCompleted = WindowsNativeMethodsx86.HandleEventsCompleted;
 
-			        HandleEventsLocked = WindowsNativeMethods.HandleEventsLocked;
+						 HandleEventsLocked = WindowsNativeMethodsx86.HandleEventsLocked;
 
-			        PollfdsHandleTimeouts = WindowsNativeMethods.PollfdsHandleTimeouts;
+						 PollfdsHandleTimeouts = WindowsNativeMethodsx86.PollfdsHandleTimeouts;
 
-			        GetNextTimeout = WindowsNativeMethods.GetNextTimeout;
+						 GetNextTimeout = WindowsNativeMethodsx86.GetNextTimeout;
 
-			        GetPollfds = WindowsNativeMethods.GetPollfds;
+						 GetPollfds = WindowsNativeMethodsx86.GetPollfds;
 
-			        FreePollfds = WindowsNativeMethods.FreePollfds;
+						 FreePollfds = WindowsNativeMethodsx86.FreePollfds;
 
-			        SetPollfdNotifiers = WindowsNativeMethods.SetPollfdNotifiers;
+						 SetPollfdNotifiers = WindowsNativeMethodsx86.SetPollfdNotifiers;
 
-			        HotplugRegisterCallback = WindowsNativeMethods.HotplugRegisterCallback;
+						 HotplugRegisterCallback = WindowsNativeMethodsx86.HotplugRegisterCallback;
 
-			        HotplugDeregisterCallback = WindowsNativeMethods.HotplugDeregisterCallback;
+						 HotplugDeregisterCallback = WindowsNativeMethodsx86.HotplugDeregisterCallback;
+					 }
+					 else
+					 {
+						 TransferDelegate = d => new WindowsNativeDelegatex64.TransferDelegate(d);
+						 HotplugCallbackFn = d => new WindowsNativeDelegatex64.HotplugCallbackFn(d);
+						 PollfdAddedDelegate = d => new WindowsNativeDelegatex64.PollfdAddedDelegate(d);
+						 PollfdRemovedDelegate = d => new WindowsNativeDelegatex64.PollfdRemovedDelegate(d);
 
-			        break;
+						 Init = WindowsNativeMethodsx64.Init;
+
+						 Exit = WindowsNativeMethodsx64.Exit;
+
+						 SetDebug = WindowsNativeMethodsx64.SetDebug;
+
+						 GetVersion = WindowsNativeMethodsx64.GetVersion;
+
+						 HasCapability = WindowsNativeMethodsx64.HasCapability;
+
+						 ErrorName = WindowsNativeMethodsx64.ErrorName;
+
+						 SetLocale = WindowsNativeMethodsx64.SetLocale;
+
+						 StrError = WindowsNativeMethodsx64.StrError;
+
+						 GetDeviceList = WindowsNativeMethodsx64.GetDeviceList;
+
+						 FreeDeviceList = WindowsNativeMethodsx64.FreeDeviceList;
+
+						 RefDevice = WindowsNativeMethodsx64.RefDevice;
+
+						 UnrefDevice = WindowsNativeMethodsx64.UnrefDevice;
+
+						 GetConfiguration = WindowsNativeMethodsx64.GetConfiguration;
+
+						 GetDeviceDescriptor = WindowsNativeMethodsx64.GetDeviceDescriptor;
+
+						 GetActiveConfigDescriptor = WindowsNativeMethodsx64.GetActiveConfigDescriptor;
+
+						 GetConfigDescriptor = WindowsNativeMethodsx64.GetConfigDescriptor;
+
+						 GetConfigDescriptorByValue = WindowsNativeMethodsx64.GetConfigDescriptorByValue;
+
+						 FreeConfigDescriptor = WindowsNativeMethodsx64.FreeConfigDescriptor;
+
+						 GetSsEndpointCompanionDescriptor = WindowsNativeMethodsx64.GetSsEndpointCompanionDescriptor;
+
+						 FreeSsEndpointCompanionDescriptor = WindowsNativeMethodsx64.FreeSsEndpointCompanionDescriptor;
+
+						 GetBosDescriptor = WindowsNativeMethodsx64.GetBosDescriptor;
+
+						 FreeBosDescriptor = WindowsNativeMethodsx64.FreeBosDescriptor;
+
+						 GetUsb20ExtensionDescriptor = WindowsNativeMethodsx64.GetUsb20ExtensionDescriptor;
+
+						 FreeUsb20ExtensionDescriptor = WindowsNativeMethodsx64.FreeUsb20ExtensionDescriptor;
+
+						 GetSsUsbDeviceCapabilityDescriptor = WindowsNativeMethodsx64.GetSsUsbDeviceCapabilityDescriptor;
+
+						 FreeSsUsbDeviceCapabilityDescriptor = WindowsNativeMethodsx64.FreeSsUsbDeviceCapabilityDescriptor;
+
+						 GetContainerIdDescriptor = WindowsNativeMethodsx64.GetContainerIdDescriptor;
+
+						 FreeContainerIdDescriptor = WindowsNativeMethodsx64.FreeContainerIdDescriptor;
+
+						 GetBusNumber = WindowsNativeMethodsx64.GetBusNumber;
+
+						 GetPortNumber = WindowsNativeMethodsx64.GetPortNumber;
+
+						 GetPortNumbers = WindowsNativeMethodsx64.GetPortNumbers;
+
+						 GetPortPath = WindowsNativeMethodsx64.GetPortPath;
+
+						 GetParent = WindowsNativeMethodsx64.GetParent;
+
+						 GetDeviceAddress = WindowsNativeMethodsx64.GetDeviceAddress;
+
+						 GetDeviceSpeed = WindowsNativeMethodsx64.GetDeviceSpeed;
+
+						 GetMaxPacketSize = WindowsNativeMethodsx64.GetMaxPacketSize;
+
+						 GetMaxIsoPacketSize = WindowsNativeMethodsx64.GetMaxIsoPacketSize;
+
+						 Open = WindowsNativeMethodsx64.Open;
+
+						 Close = WindowsNativeMethodsx64.Close;
+
+						 GetDevice = WindowsNativeMethodsx64.GetDevice;
+
+						 SetConfiguration = WindowsNativeMethodsx64.SetConfiguration;
+
+						 ClaimInterface = WindowsNativeMethodsx64.ClaimInterface;
+
+						 ReleaseInterface = WindowsNativeMethodsx64.ReleaseInterface;
+
+						 OpenDeviceWithVidPid = WindowsNativeMethodsx64.OpenDeviceWithVidPid;
+
+						 SetInterfaceAltSetting = WindowsNativeMethodsx64.SetInterfaceAltSetting;
+
+						 ClearHalt = WindowsNativeMethodsx64.ClearHalt;
+
+						 ResetDevice = WindowsNativeMethodsx64.ResetDevice;
+
+						 AllocStreams = WindowsNativeMethodsx64.AllocStreams;
+
+						 FreeStreams = WindowsNativeMethodsx64.FreeStreams;
+
+						 DevMemAlloc = WindowsNativeMethodsx64.DevMemAlloc;
+
+						 DevMemFree = WindowsNativeMethodsx64.DevMemFree;
+
+						 KernelDriverActive = WindowsNativeMethodsx64.KernelDriverActive;
+
+						 DetachKernelDriver = WindowsNativeMethodsx64.DetachKernelDriver;
+
+						 AttachKernelDriver = WindowsNativeMethodsx64.AttachKernelDriver;
+
+						 SetAutoDetachKernelDriver = WindowsNativeMethodsx64.SetAutoDetachKernelDriver;
+
+						 AllocTransfer = WindowsNativeMethodsx64.AllocTransfer;
+
+						 SubmitTransfer = WindowsNativeMethodsx64.SubmitTransfer;
+
+						 CancelTransfer = WindowsNativeMethodsx64.CancelTransfer;
+
+						 FreeTransfer = WindowsNativeMethodsx64.FreeTransfer;
+
+						 TransferSetStreamId = WindowsNativeMethodsx64.TransferSetStreamId;
+
+						 TransferGetStreamId = WindowsNativeMethodsx64.TransferGetStreamId;
+
+						 ControlTransfer = WindowsNativeMethodsx64.ControlTransfer;
+
+						 BulkTransfer = WindowsNativeMethodsx64.BulkTransfer;
+
+						 InterruptTransfer = WindowsNativeMethodsx64.InterruptTransfer;
+
+						 GetStringDescriptorAscii = WindowsNativeMethodsx64.GetStringDescriptorAscii;
+
+						 TryLockEvents = WindowsNativeMethodsx64.TryLockEvents;
+
+						 LockEvents = WindowsNativeMethodsx64.LockEvents;
+
+						 UnlockEvents = WindowsNativeMethodsx64.UnlockEvents;
+
+						 EventHandlingOk = WindowsNativeMethodsx64.EventHandlingOk;
+
+						 EventHandlerActive = WindowsNativeMethodsx64.EventHandlerActive;
+
+						 InterruptEventHandler = WindowsNativeMethodsx64.InterruptEventHandler;
+
+						 LockEventWaiters = WindowsNativeMethodsx64.LockEventWaiters;
+
+						 UnlockEventWaiters = WindowsNativeMethodsx64.UnlockEventWaiters;
+
+						 WaitForEvent = WindowsNativeMethodsx64.WaitForEvent;
+
+						 HandleEventsTimeout = WindowsNativeMethodsx64.HandleEventsTimeout;
+
+						 HandleEventsTimeoutCompleted = WindowsNativeMethodsx64.HandleEventsTimeoutCompleted;
+
+						 HandleEvents = WindowsNativeMethodsx64.HandleEvents;
+
+						 HandleEventsCompleted = WindowsNativeMethodsx64.HandleEventsCompleted;
+
+						 HandleEventsLocked = WindowsNativeMethodsx64.HandleEventsLocked;
+
+						 PollfdsHandleTimeouts = WindowsNativeMethodsx64.PollfdsHandleTimeouts;
+
+						 GetNextTimeout = WindowsNativeMethodsx64.GetNextTimeout;
+
+						 GetPollfds = WindowsNativeMethodsx64.GetPollfds;
+
+						 FreePollfds = WindowsNativeMethodsx64.FreePollfds;
+
+						 SetPollfdNotifiers = WindowsNativeMethodsx64.SetPollfdNotifiers;
+
+						 HotplugRegisterCallback = WindowsNativeMethodsx64.HotplugRegisterCallback;
+
+						 HotplugDeregisterCallback = WindowsNativeMethodsx64.HotplugDeregisterCallback;
+					 }
+
+					 break;
 	        }
         }
 	}

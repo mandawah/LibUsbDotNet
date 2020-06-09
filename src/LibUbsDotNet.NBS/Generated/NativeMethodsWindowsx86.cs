@@ -35,13 +35,13 @@ using System.Runtime.InteropServices;
 
 namespace LibUsbDotNet
 {
-    internal static unsafe class WindowsNativeMethods
+    internal static unsafe class WindowsNativeMethodsx86
     {
         /// <summary>
         /// Use the default struct alignment for this platform.
         /// </summary>
         internal const int Pack = 0;
-        private const string LibUsbNativeLibrary = "libusb-1.0.dll";
+        private const string LibUsbNativeLibrary = "libusb-1.0-x86.dll";
         internal const CallingConvention LibUsbCallingConvention = CallingConvention.StdCall;
 
         [DllImport(LibUsbNativeLibrary, CallingConvention = LibUsbCallingConvention, EntryPoint = "libusb_init")]

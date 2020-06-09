@@ -1,28 +1,23 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
-using System.Runtime.InteropServices;
 using System.Text;
 using System.Threading;
-using System.Threading.Tasks;
 using LibUsbDotNet;
 using LibUsbDotNet.Info;
 using LibUsbDotNet.LibUsb;
-using LibUsbDotNet.Main;
 
-namespace TestEmbeddedUsb
+namespace TestUsbNBS
 {
 	class Program
 	{
 		static void Main(string[] args)
 		{
-			var context = new UsbContext();
-			context.SetDebugLevel(LogLevel.Debug);
+			//UsbContext.Default.SetDebugLevel(LogLevel.Debug);
 
-			context.StartHandlingEvents();
+			UsbContext.Default.NeedsEventHandling();
 
-			var deviceList = context.GetDeviceList();
+			var deviceList = UsbContext.Default.GetDeviceList();
 			
 			foreach (var device in deviceList)
 			{
@@ -38,7 +33,7 @@ namespace TestEmbeddedUsb
 
 			//var ptsFinder = new UsbDeviceFinder(0x0A12, 0x1);
 
-			var ptsDevice = deviceList.FirstOrDefault(device => device.VendorId == 0x5AC  && device.ProductId == 0x820B);
+			var ptsDevice = deviceList.FirstOrDefault();
 
 			if (ptsDevice == null)
 			{
@@ -49,33 +44,37 @@ namespace TestEmbeddedUsb
 			if (!ptsDevice.TryOpen())
 			{
 				Console.WriteLine("Cannot Open");
-				return;
+			}
+			else
+			{
+				ptsDevice.SetConfiguration(1);
+
+				ptsDevice.ClaimInterface(0);
+
+				Console.WriteLine($"Claimed 0!!");
+
+				ptsDevice.SetAltInterface(0, 0);
+
+				Thread.Sleep(30 * 1000);
 			}
 
-			ptsDevice.SetConfiguration(1);
-			
-			ptsDevice.ClaimInterface(0);
-			//ptsDevice.SetAltInterface(0);
+			Console.WriteLine($"Stopping");
 
-			Console.WriteLine($"Claimed 0!!");
-
-			Thread.Sleep(30*1000);
-
+			UsbContext.Default.DoesntNeedEventHandlingAnymore();
 			Console.WriteLine($"Bye!");
-
 			return;
 
 		}
 
-		private static string GetDescriptorReport(IUsbDevice usbRegistry)
+		private static string GetDescriptorReport(UsbDevice usbDevice)
 		{
-			if (!usbRegistry.TryOpen()) return "Not able to open";
+			if (!usbDevice.TryOpen()) return "Not able to open";
 			
 			var sbReport = new StringBuilder();
 
-			sbReport.AppendLine(string.Format("{0} OSVersion:{1} LibUsbDotNet Version:{2} DriverMode:{3}", usbRegistry.Info.SerialNumber, Environment.OSVersion, LibUsbDotNetVersion, null));
-			sbReport.AppendLine(usbRegistry.Info.ToString());
-			foreach (UsbConfigInfo cfgInfo in usbRegistry.Configs)
+			sbReport.AppendLine(string.Format("{0} OSVersion:{1} LibUsbDotNet Version:{2} DriverMode:{3}", usbDevice.Info.SerialNumber, Environment.OSVersion, LibUsbDotNetVersion, null));
+			sbReport.AppendLine(usbDevice.Info.ToString());
+			foreach (UsbConfigInfo cfgInfo in usbDevice.Configs)
 			{
 				sbReport.AppendLine(string.Format("CONFIG #{1}\r\n{0}", cfgInfo.ToString(), cfgInfo.ConfigurationValue));
 				foreach (UsbInterfaceInfo interfaceInfo in cfgInfo.Interfaces)
@@ -93,7 +92,7 @@ namespace TestEmbeddedUsb
 				sbReport.AppendLine();
 			}
 			
-			usbRegistry.Close();
+			usbDevice.Close();
 
 			return sbReport.ToString();
 		}

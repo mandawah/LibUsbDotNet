@@ -30,7 +30,7 @@ namespace LibUsbDotNet.LibUsb
     /// </summary>
     public sealed partial class UsbContext 
     {
-        public static readonly UsbContext Instance = new UsbContext();
+        public static readonly UsbContext Default = new UsbContext();
         /// <summary>
         /// The native context.
         /// </summary>
