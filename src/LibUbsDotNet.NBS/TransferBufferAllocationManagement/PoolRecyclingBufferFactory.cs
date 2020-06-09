@@ -21,6 +21,8 @@ namespace Ellisys.Core.Memory
 		private int m_currentBufferOffset;
 		private int m_currentBufferLength;
 
+		private int m_lastConsummedByte;
+
 		private readonly List<(WeakReference<object> cargoReference, byte[] cargoBytes, GCHandle cargoPinHandle)> m_cargoList;
 		
 		private readonly RentBytesDelegate m_rent;
@@ -42,24 +44,32 @@ namespace Ellisys.Core.Memory
 			m_currentBufferOffset = 0;
 			m_currentBufferLength = 0;
 
+			m_lastConsummedByte = 0;
+
 			AllocateNewBufferIfNeeded(0);
 		}
 
 		public (IntPtr buffer, int length) RequestBuffer(int bytesRequested)
 		{
+			m_currentBufferOffset += m_lastConsummedByte;
+			m_currentCargoAvailableByteCount -= m_lastConsummedByte;
+
+			m_lastConsummedByte = 0;
+
 			AllocateNewBufferIfNeeded(bytesRequested);
 
 			return (m_currentCargoPtr + m_currentBufferOffset, bytesRequested);
 		}
 
-		public RecyclingBuffer ConsumeBuffer(int actualLength)
+		public RecyclingBuffer ConsumeBuffer(int offset, int actualLength)
 		{
-			var buffer = new RecyclingBuffer(m_currentCargoBytes, m_currentBufferOffset, actualLength, m_currentCargo);
+			var consumed = offset + actualLength;
+			if (consumed > m_lastConsummedByte)
+			{
+				m_lastConsummedByte = consumed;
+			}
 
-			m_currentBufferOffset += actualLength;
-			m_currentCargoAvailableByteCount -= actualLength;
-
-			return buffer;
+			return new RecyclingBuffer(m_currentCargoBytes, m_currentBufferOffset + offset, actualLength, m_currentCargo);
 		}
 
 		private void AllocateNewBufferIfNeeded(int len)

@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Linq;
 using System.Runtime.InteropServices;
 using System.Threading;
 using System.Threading.Tasks;
@@ -6,7 +7,7 @@ using LibUsbDotNet.Main;
 
 namespace LibUsbDotNet.LibUsb
 {
-	public class AsyncBulkTransferRunner<TOutput> : IDisposable
+	public class AsyncIsocTransferRunner<TOutput> : IDisposable
 	{
 		public delegate ValueTask ReceptionHandler(in TOutput data);
 		public delegate void ErrorHandler(Error error);
@@ -19,10 +20,12 @@ namespace LibUsbDotNet.LibUsb
 
         private readonly IntPtr[] m_transfers;
         private readonly TransferManagement<TOutput>[] m_managements;
+		private readonly ValueTask[] m_receptionTasks;
+		private readonly int m_numIsoPacketPerTransfer;
 
 		private readonly UsbContext m_context;
         
-        public unsafe AsyncBulkTransferRunner(UsbDevice usbDevice, byte endPoint, TransferManagement<TOutput>[] managements, ReceptionHandler receptionHandler, ErrorHandler errorHandler)
+        public unsafe AsyncIsocTransferRunner(UsbDevice usbDevice, byte endPoint, int isoPacketSize, int numIsoPacketPerTransfer, TransferManagement<TOutput>[] managements, ReceptionHandler receptionHandler, ErrorHandler errorHandler)
         {
 	        m_context = usbDevice.Context;
 	        m_managements = managements;
@@ -33,22 +36,33 @@ namespace LibUsbDotNet.LibUsb
 	        m_transfers = new IntPtr[parallelTransferCount];
 
 	        var deviceHandle = usbDevice.DeviceHandle.DangerousGetHandle();
+
+	        m_numIsoPacketPerTransfer = numIsoPacketPerTransfer;
+	        m_receptionTasks = new ValueTask[numIsoPacketPerTransfer];
 	        
             for (var i = 0; i < m_transfers.Length; ++i)
             {
-	            var transfer = NativeMethods.AllocTransfer(0);
+	            var transfer = NativeMethods.AllocTransfer(numIsoPacketPerTransfer);
 	            transfer->DevHandle = deviceHandle;
 	            transfer->Endpoint = endPoint;
 	            transfer->Timeout = 0;
-	            transfer->Type = (byte)EndpointType.Bulk;
-	            transfer->NumIsoPackets = 0;
+	            transfer->Type = (byte)EndpointType.Isochronous;
+	            transfer->NumIsoPackets = numIsoPacketPerTransfer;
 	            
 	            transfer->Flags = (byte)TransferFlags.None;
 	            
 	            transfer->Callback = Marshal.GetFunctionPointerForDelegate(NativeMethods.TransferDelegate(Callback));
 	            
 	            transfer->UserData = new IntPtr(i);
-                
+
+	           var descriptors = (IsoPacketDescriptor*)(&transfer->NumIsoPackets + 1);
+		            
+	            for (var p = 0; p < numIsoPacketPerTransfer; ++p)
+	            {
+		            descriptors[p].Length = (uint)isoPacketSize;
+		            
+	            }
+				
                 m_transfers[i] = new IntPtr(transfer);
             }
         }
@@ -106,21 +120,36 @@ namespace LibUsbDotNet.LibUsb
 
             if (status != TransferStatus.Completed)
             {
-	            m_errorHandler(Error.Other);
+	            m_errorHandler(Error.Other); //TODO BETTER
                 return;
             }
 			
             var transferId = transfer->UserData.ToInt32();
 
-            var receptionTask = m_receptionHandler(m_managements[transferId].HandleTransferCompleted(0, transfer->ActualLength));
+            var descriptors = (IsoPacketDescriptor*) (&transfer->NumIsoPackets + 1);
+			var offset = 0;
+			for (var p = 0; p < m_numIsoPacketPerTransfer; ++p)
+			{
+				var descriptor = descriptors[p];
+				if (descriptor.Status == TransferStatus.Completed)
+				{
+					m_receptionTasks[p] = m_receptionHandler(m_managements[transferId].HandleTransferCompleted(offset, (int) descriptor.ActualLength));
+				}
+				else
+				{
+					m_receptionTasks[p] = default;
+				}
 
-            if (receptionTask.IsCompleted)
-            {
+				offset += (int) descriptor.Length;
+			}
+
+			if(m_receptionTasks.All(t => t.IsCompleted))
+			{
                 Submit(transfer);
                 return;
             }
 
-            receptionTask.AsTask().ContinueWith(_ =>
+			Task.WhenAll(m_receptionTasks.Select(t => t.AsTask())).ContinueWith(_ =>
             {
 	            Submit(transfer);
             });
@@ -160,20 +189,5 @@ namespace LibUsbDotNet.LibUsb
 
 	        m_context.DoesntNeedEventHandlingAnymore();
         }
-	}
-
-	public readonly struct TransferManagement<TOutput>
-	{
-		public delegate (IntPtr bufferPtr, int bufferLength) PrepareTransferDelegate();
-		public delegate TOutput HandleTransferCompletedDelegate(int offset, int actualLength);
-			
-		public readonly PrepareTransferDelegate PrepareTransfer;
-		public readonly HandleTransferCompletedDelegate HandleTransferCompleted;
-			
-		public TransferManagement(PrepareTransferDelegate prepareTransfer, HandleTransferCompletedDelegate handleTransferCompleted)
-		{
-			PrepareTransfer = prepareTransfer;
-			HandleTransferCompleted = handleTransferCompleted;
-		}
 	}
 }

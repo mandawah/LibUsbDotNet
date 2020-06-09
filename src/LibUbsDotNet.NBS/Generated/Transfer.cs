@@ -115,7 +115,7 @@ namespace LibUsbDotNet
         /// <summary>
         ///  Isochronous packet descriptors, for isochronous transfers only.
         /// </summary>
-        public IntPtr IsoPacketDesc;
-
+        
+        //Not needed here
     }
 }

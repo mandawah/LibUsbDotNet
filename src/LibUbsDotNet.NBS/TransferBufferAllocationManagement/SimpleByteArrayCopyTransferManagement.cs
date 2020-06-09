@@ -18,14 +18,14 @@ namespace LibUbsDotNet.NBS.TransferBufferAllocationManagement
 			m_pinHandle = GCHandle.Alloc(m_bytes, GCHandleType.Pinned);
 			m_bytePtr = m_pinHandle.AddrOfPinnedObject();
 		}
-		private byte[] HandleTransferCompletedDelegate(int actualLength)
+		private byte[] HandleTransferCompletedDelegate(int offset, int actualLength)
 		{
 			var bytes = new byte[actualLength];
-			Buffer.BlockCopy(m_bytes, 0, bytes, 0, actualLength);
+			Buffer.BlockCopy(m_bytes, offset, bytes, 0, actualLength);
 			return bytes;
 		}
 
-		private (IntPtr bufferPtr, int bufferLength) PrepareTransferDelegate(int length)
+		private (IntPtr bufferPtr, int bufferLength) PrepareTransferDelegate()
 		{
 			return (m_bytePtr, m_bufferSize);
 		}
@@ -41,14 +41,14 @@ namespace LibUbsDotNet.NBS.TransferBufferAllocationManagement
 			}
 		}
 
-		public static AsyncBulkTransferRunner<byte[]>.TransferManagement[] CreateManagements(int count)
+		public static TransferManagement<byte[]>[] CreateManagements(int count)
 		{
-			var managements = new AsyncBulkTransferRunner<byte[]>.TransferManagement[count];
+			var managements = new TransferManagement<byte[]>[count];
 
 			for (var i = 0; i < managements.Length; ++i)
 			{
 				var management = new SimpleByteArrayCopyTransferManagement();
-				managements[i] = new AsyncBulkTransferRunner<byte[]>.TransferManagement(management.PrepareTransferDelegate, management.HandleTransferCompletedDelegate);
+				managements[i] = new TransferManagement<byte[]>(management.PrepareTransferDelegate, management.HandleTransferCompletedDelegate);
 			}
 
 			return managements;
