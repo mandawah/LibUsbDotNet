@@ -19,11 +19,8 @@
 // visit www.gnu.org.
 //
 //
-using LibUsbDotNet.Main;
+
 using System;
-using System.Collections.Generic;
-using System.Collections.ObjectModel;
-using System.Threading;
 
 namespace LibUsbDotNet.LibUsb
 {
@@ -31,22 +28,15 @@ namespace LibUsbDotNet.LibUsb
     /// An instance of the libusb API. You can use multiple <see cref="UsbContext"/> which are independent
     /// from each other.
     /// </summary>
-    public class UsbContext : IUsbContext
+    public sealed partial class UsbContext 
     {
+        public static readonly UsbContext Instance = new UsbContext();
         /// <summary>
         /// The native context.
         /// </summary>
         private readonly Context context;
 
-        /// <summary>
-        /// Tracks whether this context has been disposed of, or not.
-        /// </summary>
-        private bool disposed = false;
-
-        private Thread eventHandlingThread;
-        private bool shouldHandleEvents = false;
-
-        /// <summary>
+		/// <summary>
         /// Initializes a new instance of the <see cref="UsbContext"/> class.
         /// </summary>
         public UsbContext()
@@ -54,21 +44,6 @@ namespace LibUsbDotNet.LibUsb
             IntPtr contextHandle = IntPtr.Zero;
             NativeMethods.Init(ref contextHandle).ThrowOnError();
             this.context = Context.DangerousCreate(contextHandle);
-        }
-
-        ~UsbContext()
-        {
-            // Put cleanup code in Dispose(bool disposing).
-            this.Dispose(false);
-        }
-
-        /// <inheritdoc/>
-        public void Dispose()
-        {
-            // Put cleanup code in Dispose(bool disposing).
-            this.Dispose(true);
-
-            GC.SuppressFinalize(this);
         }
 
         /// <inheritdoc/>
@@ -93,144 +68,24 @@ namespace LibUsbDotNet.LibUsb
         /// which you can use after you've disposed the <see cref="UsbDeviceCollection"/>.
         /// </para>
         /// </remarks>
-        public unsafe UsbDeviceCollection List()
+        public unsafe UsbDevice[] GetDeviceList()
         {
             IntPtr list = IntPtr.Zero;
-            var deviceCount = NativeMethods.GetDeviceList(this.context, ref list);
+            var deviceCount = NativeMethods.GetDeviceList(this.context, ref list).ToInt32();
 
-            Collection<IUsbDevice> devices = new Collection<IUsbDevice>();
+            var devices = new UsbDevice[deviceCount];
 
             var deviceList = (IntPtr*)list.ToPointer();
-            for (int i = 0; i < deviceCount.ToInt32(); i++)
+
+            for (int i = 0; i < deviceCount; i++)
             {
                 Device device = Device.DangerousCreate(deviceList[i]);
-                devices.Add(new UsbDevice(device));
+                devices[i] = new UsbDevice(device);
             }
 
             NativeMethods.FreeDeviceList(list, unrefDevices: 0 /* Do not unreference the devices */);
 
-            return new UsbDeviceCollection(devices);
-        }
-
-        /// <inheritdoc/>
-        public IUsbDevice Find(UsbDeviceFinder finder)
-        {
-            if (finder == null)
-            {
-                throw new ArgumentNullException(nameof(finder));
-            }
-
-            return this.Find(finder.Check);
-        }
-
-        /// <inheritdoc/>
-        public IUsbDevice Find(Func<IUsbDevice, bool> predicate)
-        {
-            if (predicate == null)
-            {
-                throw new ArgumentNullException(nameof(predicate));
-            }
-
-            using (var list = this.List())
-            {
-                foreach (var device in list)
-                {
-                    if (predicate(device))
-                    {
-                        return device.Clone();
-                    }
-                }
-            }
-
-            return null;
-        }
-
-        /// <inheritdoc/>
-        public UsbDeviceCollection FindAll(UsbDeviceFinder finder)
-        {
-            if (finder == null)
-            {
-                throw new ArgumentNullException(nameof(finder));
-            }
-
-            return this.FindAll(finder.Check);
-        }
-
-        /// <inheritdoc/>
-        public UsbDeviceCollection FindAll(Func<IUsbDevice, bool> predicate)
-        {
-            if (predicate == null)
-            {
-                throw new ArgumentNullException(nameof(predicate));
-            }
-
-            var matchingDevices = new List<IUsbDevice>();
-
-            using (var list = this.List())
-            {
-                foreach (var device in list)
-                {
-                    if (predicate(device))
-                    {
-                        matchingDevices.Add(device.Clone());
-                    }
-                }
-            }
-
-            UsbDeviceCollection devices = new UsbDeviceCollection(matchingDevices);
             return devices;
-        }
-
-        public void StartHandlingEvents()
-        {
-            if (this.eventHandlingThread == null)
-            {
-                this.eventHandlingThread = new Thread(this.HandleEvents);
-                eventHandlingThread.IsBackground = true;
-                this.shouldHandleEvents = true;
-                this.eventHandlingThread.Start();
-            }
-        }
-
-        public void StopHandlingEvents()
-        {
-	        NativeMethods.InterruptEventHandler(this.context);
-	        
-            if (this.eventHandlingThread != null)
-            {
-                this.shouldHandleEvents = false;
-                this.eventHandlingThread.Join();
-            }
-            else
-            {
-                throw new InvalidOperationException();
-            }
-        }
-
-        protected virtual void Dispose(bool disposing)
-        {
-            if (!this.disposed)
-            {
-                if (disposing)
-                {
-                    // Dispose managed state (managed objects).
-                }
-
-                // Free unmanaged resources (unmanaged objects) and override a finalizer below.
-                // Set large fields to null.
-                this.disposed = true;
-            }
-        }
-
-        private void HandleEvents()
-        {
-            var timeout = new UnixNativeTimeval(10000000, 0);
-            while (this.shouldHandleEvents)
-            {
-                int completed = this.shouldHandleEvents ? 0 : 1;
-                
-                NativeMethods.HandleEventsTimeoutCompleted(this.context, ref timeout, ref completed).ThrowOnError();
-            }
         }
     }
 }

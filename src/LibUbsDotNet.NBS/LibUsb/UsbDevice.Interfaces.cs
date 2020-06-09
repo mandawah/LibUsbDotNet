@@ -26,9 +26,6 @@ namespace LibUsbDotNet.LibUsb
     // Implements functionality for the UsbDevice class, related to Interfaces
     public partial class UsbDevice
     {
-        private readonly List<int> mClaimedInterfaces = new List<int>();
-        private readonly byte[] usbAltInterfaceSettings = new byte[UsbConstants.MaxDeviceCount];
-
         /// <summary>
         /// Claims the specified interface of the device.
         /// </summary>
@@ -48,25 +45,7 @@ namespace LibUsbDotNet.LibUsb
             return true;
         }
 
-        public bool GetAltInterface(out int alternateID)
-        {
-            int interfaceID = this.mClaimedInterfaces.Count == 0 ? 0 : this.mClaimedInterfaces[this.mClaimedInterfaces.Count - 1];
-            return this.GetAltInterface(interfaceID, out alternateID);
-        }
-
-        /// <summary>
-        /// Gets the alternate interface number for the specified interfaceID.
-        /// </summary>
-        /// <param name="interfaceID">The interface number of to get the alternate setting for.</param>
-        /// <param name="alternateID">The currrently selected alternate interface number.</param>
-        /// <returns>True on success.</returns>
-        public bool GetAltInterface(int interfaceID, out int alternateID)
-        {
-            alternateID = this.usbAltInterfaceSettings[interfaceID & (UsbConstants.MaxDeviceCount - 1)];
-            return true;
-        }
-
-        /// <summary>
+		/// <summary>
         /// Gets the selected alternate interface of the specified interface.
         /// </summary>
         /// <param name="interfaceID">The interface settings number (index) to retrieve the selected alternate interface setting for.</param>
@@ -74,7 +53,6 @@ namespace LibUsbDotNet.LibUsb
         public void GetAltInterfaceSetting(byte interfaceID, out byte selectedAltInterfaceID)
         {
             byte[] buf = new byte[1];
-            int uTransferLength;
 
             UsbSetupPacket setupPkt = new UsbSetupPacket();
             setupPkt.RequestType = (byte)EndpointDirection.In | (byte)UsbRequestType.TypeStandard |
@@ -84,7 +62,7 @@ namespace LibUsbDotNet.LibUsb
             setupPkt.Index = interfaceID;
             setupPkt.Length = 1;
 
-            uTransferLength = this.ControlTransfer(setupPkt, buf, 0, buf.Length);
+            var uTransferLength = this.ControlTransfer(setupPkt, buf, 0, buf.Length);
             if (uTransferLength == 1)
             {
                 selectedAltInterfaceID = buf[0];
@@ -100,14 +78,10 @@ namespace LibUsbDotNet.LibUsb
         /// </summary>
         /// <param name="interfaceID">The interface to release.</param>
         /// <returns>True on success.</returns>
-        public bool ReleaseInterface(int interfaceID)
+        public void ReleaseInterface(int interfaceID)
         {
             this.EnsureOpen();
-
-            var ret = NativeMethods.ReleaseInterface(this.deviceHandle, interfaceID);
-            this.mClaimedInterfaces.Remove(interfaceID);
-            ret.ThrowOnError();
-            return true;
+            NativeMethods.ReleaseInterface(this.deviceHandle, interfaceID).ThrowOnError();
         }
 
         /// <summary>
@@ -115,28 +89,10 @@ namespace LibUsbDotNet.LibUsb
         /// </summary>
         /// <param name="alternateID">The alternate interface to select for the most recent claimed interface See <see cref="ClaimInterface"/>.</param>
         /// <returns>True on success.</returns>
-        public bool SetAltInterface(int interfaceID, int alternateID)
+        public void SetAltInterface(int interfaceID, int alternateID)
         {
             this.EnsureOpen();
-
             NativeMethods.SetInterfaceAltSetting(this.deviceHandle, interfaceID, alternateID).ThrowOnError();
-            this.usbAltInterfaceSettings[interfaceID & (UsbConstants.MaxDeviceCount - 1)] = (byte)alternateID;
-            return true;
-        }
-
-        /// <summary>
-        /// Sets an alternate interface for the most recent claimed interface.
-        /// </summary>
-        /// <param name="alternateID">The alternate interface to select for the most recent claimed interface See <see cref="ClaimInterface"/>.</param>
-        /// <returns>True on success.</returns>
-        public bool SetAltInterface(int alternateID)
-        {
-            if (this.mClaimedInterfaces.Count == 0)
-            {
-                throw new UsbException("You must claim an interface before setting an alternate interface.");
-            }
-
-            return this.SetAltInterface(this.mClaimedInterfaces[this.mClaimedInterfaces.Count - 1], alternateID);
         }
     }
 }

@@ -36,7 +36,7 @@ namespace LibUsbDotNet.Info
 
         private readonly Collection<UsbConfigInfo> configurations = new Collection<UsbConfigInfo>();
 
-        public static UsbDeviceInfo FromUsbDeviceDescriptor(LibUsb.IUsbDevice device, DeviceDescriptor descriptor)
+        public static UsbDeviceInfo FromUsbDeviceDescriptor(LibUsb.UsbDevice device, DeviceDescriptor descriptor)
         {
             Debug.Assert(descriptor.DescriptorType == (int)DescriptorType.Device, "A config descriptor was expected");
 

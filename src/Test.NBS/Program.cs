@@ -21,8 +21,10 @@ namespace TestEmbeddedUsb
 			context.SetDebugLevel(LogLevel.Debug);
 
 			context.StartHandlingEvents();
+
+			var deviceList = context.GetDeviceList();
 			
-			foreach (var device in context.List())
+			foreach (var device in deviceList)
 			{
 				string sAdd = string.Format("Vid:0x{0:X4} Pid:0x{1:X4} (rev:{2})",
 					device.Info.VendorId,
@@ -36,7 +38,7 @@ namespace TestEmbeddedUsb
 
 			//var ptsFinder = new UsbDeviceFinder(0x0A12, 0x1);
 
-			var ptsDevice = context.Find(device => device.VendorId == 0x5AC  && device.ProductId == 0x820B);
+			var ptsDevice = deviceList.FirstOrDefault(device => device.VendorId == 0x5AC  && device.ProductId == 0x820B);
 
 			if (ptsDevice == null)
 			{

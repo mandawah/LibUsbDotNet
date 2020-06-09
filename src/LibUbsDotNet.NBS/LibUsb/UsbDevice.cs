@@ -27,7 +27,7 @@ namespace LibUsbDotNet.LibUsb
     /// Represents a device which is managed by libusb. Use <see cref="UsbContext.List"/>
     /// to get a list of devices which are available for use.
     /// </summary>
-    public partial class UsbDevice : IUsbDevice, IDisposable, ICloneable
+    public partial class UsbDevice : IDisposable
     {
         private bool disposed;
 
@@ -51,23 +51,6 @@ namespace LibUsbDotNet.LibUsb
             }
 
             this.device = device;
-        }
-
-        /// <summary>
-        /// Creates a clone of this device.
-        /// </summary>
-        /// <returns>
-        /// A new <see cref="UsbDevice"/> which represents a clone of this device.
-        /// </returns>
-        public IUsbDevice Clone()
-        {
-            return new UsbDevice(NativeMethods.RefDevice(this.device));
-        }
-
-        /// <inheritdoc/>
-        object ICloneable.Clone()
-        {
-            return this.Clone();
         }
 
         /// <inheritdoc/>
