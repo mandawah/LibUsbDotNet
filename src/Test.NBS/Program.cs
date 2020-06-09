@@ -68,8 +68,8 @@ namespace TestUsbNBS
 
 			var reporter = new ThroughputReporter();
 
-			var bulkReader = new AsyncBulkTransferRunner<byte[]>(ptsDevice, 0x81, SimpleByteArrayCopyTransferManagement.CreateManagements(4),
-				(in byte[] data) =>
+			var bulkReader = new AsyncBulkTransferRunner(ptsDevice, 0x81, SimpleByteArrayCopyTransferManagement.CreateManagements(4,
+				data=>
 				{
 					//Console.WriteLine($"Received {data.Length:D2} bytes : {new string(data.Select(b => (char)b).ToArray()),40}");
 					reporter.AddReceptionCount(data.Length);
@@ -78,8 +78,7 @@ namespace TestUsbNBS
 				error =>
 				{
 					Console.WriteLine($"Error {error}");
-				}
-				);
+				}));
 
 			bulkReader.StartReceive();
 
