@@ -11,11 +11,11 @@ namespace LibUsbDotNet.LibUsb
         private int m_started;
 
         private readonly IntPtr[] m_transfers;
-        protected readonly TransferManagement[] m_managements;
+        protected readonly AsyncTransferManagement[] m_managements;
 
 		private readonly UsbContext m_context;
         
-        public unsafe AbstractAsyncTransferRunner(UsbDevice usbDevice, byte endPoint, TransferManagement[] managements)
+        public unsafe AbstractAsyncTransferRunner(UsbDevice usbDevice, byte endPoint, AsyncTransferManagement[] managements)
         {
 	        m_context = usbDevice.Context;
 	        m_managements = managements;
@@ -44,7 +44,7 @@ namespace LibUsbDotNet.LibUsb
 
         protected abstract unsafe Transfer* CreateTransfer();
         
-        public void StartReceive()
+        public void Start()
         {
 	        if (Interlocked.Exchange(ref m_started, 1) > 0)
 	        {
@@ -66,23 +66,39 @@ namespace LibUsbDotNet.LibUsb
         {
 	        var transferId = transfer->UserData.ToInt32();
 	        
-            var (bufferPtr, length) = m_managements[transferId].PrepareTransfer();
+            var transferTask = m_managements[transferId].PrepareTransfer();
 
-            transfer->Buffer = (byte*)bufferPtr.ToPointer();
-            transfer->Length = length;
-
-            var status = NativeMethods.SubmitTransfer(transfer);
-            if (status == Error.Success)
+            if (transferTask.IsCompleted)
             {
-	           return;
+				var (bufferPtr, length) = transferTask.Result;
+				Submit(transfer, transferId, bufferPtr, length);
+				return;
             }
 
-            m_transfers[transfer->UserData.ToInt32()] = IntPtr.Zero;
-            NativeMethods.FreeTransfer(transfer);
-
-            m_managements[transferId].HandleError(status);
+            transferTask.AsTask().ContinueWith(t =>
+            {
+	            var (bufferPtr, length) = t.Result;
+	            Submit(transfer, transferId, bufferPtr, length);
+            }, TaskContinuationOptions.ExecuteSynchronously);
         }
 
+        private unsafe void Submit(Transfer* transfer, int transferId, IntPtr bufferPtr, int length)
+        {
+	        transfer->Buffer = (byte*)bufferPtr.ToPointer();
+	        transfer->Length = length;
+
+	        var status = NativeMethods.SubmitTransfer(transfer);
+	        if (status == Error.Success)
+	        {
+		        return;
+	        }
+
+	        m_transfers[transferId] = IntPtr.Zero;
+	        NativeMethods.FreeTransfer(transfer);
+
+	        m_managements[transferId].HandleError(status);
+        }
+		
         private unsafe void Callback(Transfer* transfer)
         {
 	        var status = transfer->Status;
@@ -95,14 +111,14 @@ namespace LibUsbDotNet.LibUsb
 
             if (status != TransferStatus.Completed)
             {
-	            m_managements[transfer->UserData.ToInt32()].HandleError(Error.Other);
+	            m_managements[transfer->UserData.ToInt32()].HandleError(Error.Other); //TODO Better
                 return;
             }
 			
-            HandleTransfer(transfer);
+            HandleTransferCompleted(transfer);
         }
 
-        protected abstract unsafe void HandleTransfer(Transfer* transfer);
+        protected abstract unsafe void HandleTransferCompleted(Transfer* transfer);
 
         private unsafe void CancelTransfer(Transfer* transfer)
         {
@@ -144,9 +160,9 @@ namespace LibUsbDotNet.LibUsb
         }
 	}
 
-	public readonly struct TransferManagement
+	public readonly struct AsyncTransferManagement
 	{
-		public delegate (IntPtr bufferPtr, int bufferLength) PrepareTransferDelegate();
+		public delegate ValueTask<(IntPtr bufferPtr, int bufferLength)> PrepareTransferDelegate();
 		public delegate ValueTask HandleTransferCompletedDelegate(int offset, int actualLength);
 		public delegate void ErrorHandler(Error error);
 			
@@ -154,7 +170,7 @@ namespace LibUsbDotNet.LibUsb
 		public readonly HandleTransferCompletedDelegate HandleTransferCompleted;
 		public readonly ErrorHandler HandleError;
 			
-		public TransferManagement(PrepareTransferDelegate prepareTransfer, HandleTransferCompletedDelegate handleTransferCompleted, ErrorHandler handleError)
+		public AsyncTransferManagement(PrepareTransferDelegate prepareTransfer, HandleTransferCompletedDelegate handleTransferCompleted, ErrorHandler handleError)
 		{
 			PrepareTransfer = prepareTransfer;
 			HandleTransferCompleted = handleTransferCompleted;

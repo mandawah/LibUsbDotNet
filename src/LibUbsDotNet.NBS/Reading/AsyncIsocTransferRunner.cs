@@ -10,7 +10,7 @@ namespace LibUsbDotNet.LibUsb
 		private readonly int m_numIsoPacketPerTransfer;
 		private readonly int m_isoPacketSize;
 
-		public unsafe AsyncIsocTransferRunner(UsbDevice usbDevice, byte endPoint, int isoPacketSize, int numIsoPacketPerTransfer, TransferManagement[] managements)
+		public AsyncIsocTransferRunner(UsbDevice usbDevice, byte endPoint, int isoPacketSize, int numIsoPacketPerTransfer, AsyncTransferManagement[] managements)
 			: base(usbDevice, endPoint, managements)
         {
 	        m_numIsoPacketPerTransfer = numIsoPacketPerTransfer;
@@ -35,7 +35,7 @@ namespace LibUsbDotNet.LibUsb
 			return transfer;
 		}
 
-		protected override unsafe void HandleTransfer(Transfer* transfer)
+		protected override unsafe void HandleTransferCompleted(Transfer* transfer)
 		{
 			var transferId = transfer->UserData.ToInt32();
 

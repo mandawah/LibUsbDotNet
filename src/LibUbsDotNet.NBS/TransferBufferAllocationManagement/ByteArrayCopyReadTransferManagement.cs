@@ -5,7 +5,7 @@ using LibUsbDotNet.LibUsb;
 
 namespace LibUbsDotNet.NBS.TransferBufferAllocationManagement
 {
-	public class SimpleByteArrayCopyTransferManagement
+	public class ByteArrayCopyReadTransferManagement
 	{ 
 		private readonly byte[] m_bytes;
 		private readonly int m_bufferSize;
@@ -14,7 +14,7 @@ namespace LibUbsDotNet.NBS.TransferBufferAllocationManagement
 
 		private readonly Func<byte[], ValueTask> m_reception;
 
-		private SimpleByteArrayCopyTransferManagement(Func<byte[], ValueTask> reception, int bufferSize = 65536)
+		private ByteArrayCopyReadTransferManagement(Func<byte[], ValueTask> reception, int bufferSize = 65536)
 		{
 			m_reception = reception;
 			m_bufferSize = bufferSize;
@@ -29,12 +29,12 @@ namespace LibUbsDotNet.NBS.TransferBufferAllocationManagement
 			return m_reception(bytes);
 		}
 
-		private (IntPtr bufferPtr, int bufferLength) PrepareTransferDelegate()
+		private ValueTask<(IntPtr bufferPtr, int bufferLength)> PrepareTransferDelegate()
 		{
-			return (m_bytePtr, m_bufferSize);
+			return new ValueTask<(IntPtr bufferPtr, int bufferLength)>((m_bytePtr, m_bufferSize));
 		}
 
-		~SimpleByteArrayCopyTransferManagement()
+		~ByteArrayCopyReadTransferManagement()
 		{
 			try
 			{
@@ -45,14 +45,14 @@ namespace LibUbsDotNet.NBS.TransferBufferAllocationManagement
 			}
 		}
 
-		public static TransferManagement[] CreateManagements(int count, Func<byte[], ValueTask> reception, TransferManagement.ErrorHandler errorHandler)
+		public static AsyncTransferManagement[] CreateManagements(int count, Func<byte[], ValueTask> reception, AsyncTransferManagement.ErrorHandler errorHandler)
 		{
-			var managements = new TransferManagement[count];
+			var managements = new AsyncTransferManagement[count];
 
 			for (var i = 0; i < managements.Length; ++i)
 			{
-				var management = new SimpleByteArrayCopyTransferManagement(reception);
-				managements[i] = new TransferManagement(management.PrepareTransferDelegate, management.HandleTransferCompletedDelegate, errorHandler);
+				var management = new ByteArrayCopyReadTransferManagement(reception);
+				managements[i] = new AsyncTransferManagement(management.PrepareTransferDelegate, management.HandleTransferCompletedDelegate, errorHandler);
 			}
 
 			return managements;

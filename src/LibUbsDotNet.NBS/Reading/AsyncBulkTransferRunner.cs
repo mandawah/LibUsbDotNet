@@ -5,7 +5,7 @@ namespace LibUsbDotNet.LibUsb
 {
 	public class AsyncBulkTransferRunner: AbstractAsyncTransferRunner
 	{
-		public unsafe AsyncBulkTransferRunner(UsbDevice usbDevice, byte endPoint, TransferManagement[] managements)
+		public unsafe AsyncBulkTransferRunner(UsbDevice usbDevice, byte endPoint, AsyncTransferManagement[] managements)
 			: base(usbDevice, endPoint, managements)
         {
         }
@@ -18,7 +18,7 @@ namespace LibUsbDotNet.LibUsb
 			return transfer;
 		}
 
-		protected override unsafe void HandleTransfer(Transfer* transfer)
+		protected override unsafe void HandleTransferCompleted(Transfer* transfer)
 		{
 			var transferId = transfer->UserData.ToInt32();
 
