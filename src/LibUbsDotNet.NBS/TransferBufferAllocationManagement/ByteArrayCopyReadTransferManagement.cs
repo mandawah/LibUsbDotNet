@@ -22,14 +22,14 @@ namespace LibUbsDotNet.NBS.TransferBufferAllocationManagement
 			m_pinHandle = GCHandle.Alloc(m_bytes, GCHandleType.Pinned);
 			m_bytePtr = m_pinHandle.AddrOfPinnedObject();
 		}
-		private ValueTask HandleTransferCompletedDelegate(int offset, int actualLength)
+		private ValueTask HandleTransferCompleted(int offset, int actualLength)
 		{
 			var bytes = new byte[actualLength];
 			Buffer.BlockCopy(m_bytes, offset, bytes, 0, actualLength);
 			return m_reception(bytes);
 		}
 
-		private ValueTask<(IntPtr bufferPtr, int bufferLength)> PrepareTransferDelegate()
+		private ValueTask<(IntPtr bufferPtr, int bufferLength)> PrepareTransfer()
 		{
 			return new ValueTask<(IntPtr bufferPtr, int bufferLength)>((m_bytePtr, m_bufferSize));
 		}
@@ -52,7 +52,7 @@ namespace LibUbsDotNet.NBS.TransferBufferAllocationManagement
 			for (var i = 0; i < managements.Length; ++i)
 			{
 				var management = new ByteArrayCopyReadTransferManagement(reception);
-				managements[i] = new AsyncTransferManagement(management.PrepareTransferDelegate, management.HandleTransferCompletedDelegate, errorHandler);
+				managements[i] = new AsyncTransferManagement(management.PrepareTransfer, management.HandleTransferCompleted, errorHandler);
 			}
 
 			return managements;

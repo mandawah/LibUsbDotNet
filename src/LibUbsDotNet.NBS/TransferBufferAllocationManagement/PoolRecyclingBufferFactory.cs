@@ -45,8 +45,6 @@ namespace Ellisys.Core.Memory
 			m_currentBufferLength = 0;
 
 			m_lastConsummedByte = 0;
-
-			AllocateNewBufferIfNeeded(0);
 		}
 
 		public (IntPtr buffer, int length) RequestBuffer(int bytesRequested)
